@@ -1,10 +1,12 @@
 from .. import NogginConstants
-from . import PBConstants
+from . import RoleConstants
+from . import SubRolesConstants
+from . import PositionConstants
 from . import SubRoles
 
 def rChaser(team, workingPlay):
-    workingPlay.setRole(PBConstants.CHASER)
-    workingPlay.setSubRole(PBConstants.CHASE_NORMAL)
+    workingPlay.setRole(RoleConstants.CHASER)
+    workingPlay.setSubRole(SubRolesConstants.CHASE_NORMAL)
     pos = (team.brain.my.x,team.brain.my.y)
     workingPlay.setPosition(pos)
 
@@ -12,26 +14,27 @@ def rSearcher(team, workingPlay):
     '''
     Determines positioning for robots while using the finder formation
     '''
-    workingPlay.setRole(PBConstants.SEARCHER)
+    workingPlay.setRole(RoleConstants.SEARCHER)
     if team.numActiveFieldPlayers == 1:
-        workingPlay.setSubRole(PBConstants.OTHER_FINDER)
-        workingPlay.setPosition((PBConstants.SWEEPER_X, PBConstants.SWEEPER_Y))
+        workingPlay.setSubRole(SubRolesConstants.OTHER_FINDER)
+        workingPlay.setPosition((PositionConstants.SWEEPER_X,
+                                 PositionConstants.SWEEPER_Y))
     else:
         teammate = team.getOtherActiveTeammate()
         pos = team.getLeastWeightPosition(
-            PBConstants.TWO_DOG_FINDER_POSITIONS,
+            PositionConstants.TWO_DOG_FINDER_POSITIONS,
             teammate)
-        if pos == PBConstants.TWO_DOG_FINDER_POSITIONS[0]:
-            workingPlay.setSubRole(PBConstants.FRONT_FINDER)
+        if pos == PositionConstants.TWO_DOG_FINDER_POSITIONS[0]:
+            workingPlay.setSubRole(SubRolesConstants.FRONT_FINDER)
         else:
-            workingPlay.setSubRole(PBConstants.OTHER_FINDER)
+            workingPlay.setSubRole(SubRolesConstants.OTHER_FINDER)
         workingPlay.setPosition(pos[:2])
 
 def rDefender(team, workingPlay):
     '''gets positioning for defender'''
-    workingPlay.setRole(PBConstants.DEFENDER)
+    workingPlay.setRole(RoleConstants.DEFENDER)
     # If the ball is deep in our side, we become a sweeper
-    if team.brain.ball.x < PBConstants.SWEEPER_X:
+    if team.brain.ball.x < PositionConstants.SWEEPER_X:
         SubRoles.pSweeper(team, workingPlay)
 
     elif team.brain.ball.x > NogginConstants.MIDFIELD_X:
@@ -49,7 +52,7 @@ def rOffender(team, workingPlay):
     """
     The offensive attacker!
     """
-    workingPlay.setRole(PBConstants.OFFENDER)
+    workingPlay.setRole(RoleConstants.OFFENDER)
     # RIGHT_WING  if ball is in opp half but not in a corner
     if ((team.brain.ball.x > NogginConstants.CENTER_FIELD_X) and
         (team.brain.ball.y < NogginConstants.CENTER_FIELD_Y)):
@@ -62,7 +65,7 @@ def rGoalie(team, workingPlay):
     """
     The Goalie
     """
-    workingPlay.setRole(PBConstants.GOALIE)
+    workingPlay.setRole(RoleConstants.GOALIE)
     if (team.brain.gameController.currentState == 'gameReady' or
         team.brain.gameController.currentState =='gameSet'):
         SubRoles.pGoalieReady(team, workingPlay)
@@ -73,17 +76,17 @@ def rGoalie(team, workingPlay):
 
 def rMiddie(team, workingPlay):
 
-    workingPlay.setRole(PBConstants.MIDDIE)
+    workingPlay.setRole(RoleConstants.MIDDIE)
     SubRoles.pDefensiveMiddie(team, workingPlay)
 
 def rDefenderDubD(team, workingPlay):
 
-    workingPlay.setRole(PBConstants.DEFENDER_DUB_D)
+    workingPlay.setRole(RoleConstants.DEFENDER_DUB_D)
      # Figure out who isn't penalized with you
     other_teammate = team.getOtherActiveTeammate()
 
-    leftPos = PBConstants.LEFT_DEEP_BACK_POS
-    rightPos = PBConstants.RIGHT_DEEP_BACK_POS
+    leftPos = PositionConstants.LEFT_DEEP_BACK_POS
+    rightPos = PositionConstants.RIGHT_DEEP_BACK_POS
     # Figure out who should go to which position
     pos = team.getLeastWeightPosition((leftPos,rightPos), other_teammate)
 

@@ -1,10 +1,15 @@
 from math import (fabs, hypot, cos, sin, acos, asin)
 
 
-from . import PBConstants
 from . import Strategies
 from ..typeDefs import Play
 from .. import NogginConstants
+from . import GoTeamConstants
+from . import PositionConstants
+from . import RoleConstants
+from .StrategyConstants import PENALTY_STRATEGY
+from .FormationConstants import PENALTY_FORMATION
+from .SubRolesConstants import PENALTY_SUB_ROLE
 import time
 
 # ANSI terminal color codes
@@ -40,12 +45,11 @@ class GoTeam:
         self.activeFieldPlayers = []
         self.numActiveFieldPlayers = 0
         self.kickoffFormation = 0
-        self.timeSinceCaptureChase = 0
         self.pulledGoalie = False
-        self.ellipse = Ellipse(PBConstants.LARGE_ELLIPSE_CENTER_X,
-                               PBConstants.LARGE_ELLIPSE_CENTER_Y,
-                               PBConstants.LARGE_ELLIPSE_HEIGHT,
-                               PBConstants.LARGE_ELLIPSE_WIDTH)
+        self.ellipse = Ellipse(PositionConstants.LARGE_ELLIPSE_CENTER_X,
+                               PositionConstants.LARGE_ELLIPSE_CENTER_Y,
+                               PositionConstants.LARGE_ELLIPSE_HEIGHT,
+                               PositionConstants.LARGE_ELLIPSE_WIDTH)
 
     def run(self):
         """
@@ -75,17 +79,17 @@ class GoTeam:
         elif currentGCState == 'gamePenalized':
             # look into saving time by not setting this if last play
             # was penalized
-            newPlay.setStrategy(PBConstants.PENALTY_STRATEGY)
-            newPlay.setFormation(PBConstants.PENALTY_FORMATION)
-            newPlay.setRole(PBConstants.PENALTY_ROLE)
-            newPlay.setSubRole(PBConstants.PENALTY_SUB_ROLE)
+            newPlay.setStrategy(PENALTY_STRATEGY)
+            newPlay.setFormation(PENALTY_FORMATION)
+            newPlay.setRole(RoleConstants.PENALTY_ROLE)
+            newPlay.setSubRole(PENALTY_SUB_ROLE)
 
         # Check for testing stuff
-        elif PBConstants.TEST_DEFENDER:
+        elif GoTeamConstants.TEST_DEFENDER:
             Strategies.sTestDefender(self, newPlay)
-        elif PBConstants.TEST_OFFENDER:
+        elif GoTeamConstants.TEST_OFFENDER:
             Strategies.sTestOffender(self, newPlay)
-        elif PBConstants.TEST_CHASER:
+        elif GoTeamConstants.TEST_CHASER:
             Strategies.sTestChaser(self, newPlay)
 
         # Have a separate ready section to make things simpler
@@ -93,6 +97,8 @@ class GoTeam:
               currentGCState =='gameSet'):
             Strategies.sReady(self, newPlay)
 
+        elif True:
+            Strategies.sWin(self, newPlay)
         # Now we look at game strategies
         elif self.numActiveFieldPlayers == 0:
             Strategies.sNoFieldPlayers(self, newPlay)
@@ -129,34 +135,35 @@ class GoTeam:
 
         chaser_mate = self.me
 
-        if PBConstants.DEBUG_DET_CHASER:
+        if GoTeamConstants.DEBUG_DET_CHASER:
             self.printf("chaser det: me == #%g"% self.brain.my.playerNumber)
 
         #save processing time and skip the rest if we have the ball
         if self.me.hasBall(): #and self.me.isChaser()?
-            if PBConstants.DEBUG_DET_CHASER:
+            if GoTeamConstants.DEBUG_DET_CHASER:
                 self.printf("I have the ball")
             return chaser_mate
 
         # scroll through the teammates
         for mate in self.activeFieldPlayers:
-            if PBConstants.DEBUG_DET_CHASER:
+            if GoTeamConstants.DEBUG_DET_CHASER:
                 self.printf("\t mate #%g"% mate.playerNumber)
 
-            # If the player number is me, or our ball models are super divergent ignore
+            # If the player number is me, or our ball models are
+            #super divergent ignore
             if (mate.playerNumber == self.me.playerNumber or
                 fabs(mate.ballY - self.brain.ball.y) >
-                PBConstants.BALL_DIVERGENCE_THRESH or
+                GoTeamConstants.BALL_DIVERGENCE_THRESH or
                 fabs(mate.ballX - self.brain.ball.x) >
-                PBConstants.BALL_DIVERGENCE_THRESH):
+                GoTeamConstants.BALL_DIVERGENCE_THRESH):
 
-                if PBConstants.DEBUG_DET_CHASER:
+                if GoTeamConstants.DEBUG_DET_CHASER:
                     self.printf("Ball models are divergent, or it's me")
                 continue
             #dangerous- two players might both have ball, both would stay chaser
             #same as the aibo code but thresholds for hasBall are higher now
             elif mate.hasBall():
-                if PBConstants.DEBUG_DET_CHASER:
+                if GoTeamConstants.DEBUG_DET_CHASER:
                     self.printf("mate %g has ball" % mate.playerNumber)
                 chaser_mate = mate
             else:
@@ -166,13 +173,13 @@ class GoTeam:
                 else:
                     chaseTimeScale = mate.chaseTime
                 #TO-DO: break into a separate function call
-                if ((self.me.chaseTime - mate.chaseTime <
-                     PBConstants.CALL_OFF_THRESH + .15 *chaseTimeScale or
-                     (self.me.chaseTime - mate.chaseTime <
-                      PBConstants.STOP_CALLING_THRESH + .35 * chaseTimeScale and
-                      self.me.isTeammateRole(PBConstants.CHASER))) and
-                    mate.playerNumber < self.me.playerNumber):
-                    if PBConstants.DEBUG_DET_CHASER:
+                if ( (self.me.chaseTime - mate.chaseTime <
+                      GoTeamConstants.CALL_OFF_THRESH + .15 *chaseTimeScale or
+                      (self.me.chaseTime - mate.chaseTime <
+                       GoTeamConstants.STOP_CALLING_THRESH + .35 *chaseTimeScale
+                       and self.me.isTeammateRole(RoleConstants.CHASER))) and
+                     mate.playerNumber < self.me.playerNumber):
+                    if GoTeamConstants.DEBUG_DET_CHASER:
                         self.printf("\t #%d @ %g >= #%d @ %g" %
                                (mate.playerNumber, mate.chaseTime,
                                 chaser_mate.playerNumber,
@@ -181,8 +188,8 @@ class GoTeam:
                 #TO-DO: break into a separate function call
                 elif (mate.playerNumber > self.me.playerNumber and
                       mate.chaseTime - self.me.chaseTime <
-                      PBConstants.LISTEN_THRESH + .45 * chaseTimeScale and
-                      mate.isTeammateRole(PBConstants.CHASER)):
+                      GoTeamConstants.LISTEN_THRESH + .45 * chaseTimeScale and
+                      mate.isTeammateRole(RoleConstants.CHASER)):
                     chaser_mate = mate
 
                 # else pick the lowest chaseTime
@@ -190,18 +197,18 @@ class GoTeam:
                     if mate.chaseTime < chaser_mate.chaseTime:
                         chaser_mate = mate
 
-                    if PBConstants.DEBUG_DET_CHASER:
+                    if GoTeamConstants.DEBUG_DET_CHASER:
                         self.printf (("\t #%d @ %g >= #%d @ %g" %
                                       (mate.playerNumber, mate.chaseTime,
                                        chaser_mate.playerNumber,
                                        chaser_mate.chaseTime)))
 
-        if PBConstants.DEBUG_DET_CHASER:
+        if GoTeamConstants.DEBUG_DET_CHASER:
             self.printf ("\t ---- MATE %g WINS" % (chaser_mate.playerNumber))
         # returns teammate instance (could be mine)
         return chaser_mate
 
-    def getLeastWeightPosition(self,positions, mates = None):
+    def getLeastWeightPosition(self, positions, mates = None):
         """
         Gets the position for the robot such that the distance all robot have
         to move is the least possible
@@ -257,21 +264,13 @@ class GoTeam:
             if (mate.isDead() or mate.isPenalized()):
                 #reset to false when we get a new packet from mate
                 mate.active = False
-            elif (mate.active and (not mate.isTeammateRole(PBConstants.GOALIE)
-                                   or (mate.isDefaultGoalie() and self.pulledGoalie))):
+            elif mate.active and not mate.isTeammateRole(RoleConstants.GOALIE):
                 append(mate)
                 self.numActiveFieldPlayers += 1
 
                 # Not using teammate ball reports for now
-                if (PBConstants.USE_FINDER and mate.ballDist > 0):
-                    self.brain.ball.reportBallSeen()
-
-    def highestActivePlayerNumber(self):
-        '''returns true if the player is the highest active player number'''
-        activeMate = self.getOtherActiveTeammate()
-        if activeMate.playerNumber > self.me.playerNumber:
-            return False
-        return True
+                #if (mate.ballDist > 0):
+                #    self.brain.ball.reportBallSeen()
 
     def getOtherActiveTeammate(self):
         '''this returns the teammate instance of an active teammate that isn't
@@ -312,17 +311,17 @@ class GoTeam:
             #return False
 
         if self.brain.gameController.currentState == 'gameReady' or\
-                self.brain.gameController.currentState =='gameSet':
+                self.brain.gameController.currentState == 'gameSet':
             return False
-        # TO-DO: switch this to activeFieldPlayers
-        for mate in self.brain.teamMembers:
-            if (mate.active and (mate.isTeammateRole(PBConstants.CHASER)
-                                 or mate.isTeammateRole(PBConstants.SEARCHER))):
+
+        for mate in self.brain.activeFieldPlayers:
+            if (mate.isTeammateRole(RoleConstants.CHASER)
+                or mate.isTeammateRole(RoleConstants.SEARCHER)):
                 return False
         return True
 
     def pullTheGoalie(self):
-        if PBConstants.PULL_THE_GOALIE:
+        if GoTeamConstants.PULL_THE_GOALIE:
             if self.brain.gameController.getScoreDifferential() <= -3:
                 return True
         return False
@@ -361,77 +360,79 @@ class GoTeam:
         # if the robot sees the ball use visual distances to ball
         time = 0.0
 
-        if PBConstants.DEBUG_DETERMINE_CHASE_TIME:
+        if GoTeamConstants.DEBUG_DETERMINE_CHASE_TIME:
             self.printf("DETERMINE CHASE TIME DEBUG")
         if self.me.ballDist > 0:
-            time += (self.me.ballDist / PBConstants.CHASE_SPEED) *\
-                PBConstants.SEC_TO_MILLIS
+            time += (self.me.ballDist / GoTeamConstants.CHASE_SPEED) *\
+                GoTeamConstants.SEC_TO_MILLIS
 
-            if PBConstants.DEBUG_DETERMINE_CHASE_TIME:
+            if GoTeamConstants.DEBUG_DETERMINE_CHASE_TIME:
                 self.printf("\tChase time base is " + str(time))
 
             # Give a bonus for seeing the ball
-            time -= PBConstants.BALL_ON_BONUS
+            time -= GoTeamConstants.BALL_ON_BONUS
 
-            if PBConstants.DEBUG_DETERMINE_CHASE_TIME:
+            if GoTeamConstants.DEBUG_DETERMINE_CHASE_TIME:
                 self.printf("\tChase time after ball on bonus " + str(time))
 
         else: # use loc distances if no visual ball
-            time += (self.me.ballLocDist / PBConstants.CHASE_SPEED) *\
-                PBConstants.SEC_TO_MILLIS
-            if PBConstants.DEBUG_DETERMINE_CHASE_TIME:
+            time += (self.me.ballLocDist / GoTeamConstants.CHASE_SPEED) *\
+                GoTeamConstants.SEC_TO_MILLIS
+            if GoTeamConstants.DEBUG_DETERMINE_CHASE_TIME:
                 self.printf("\tChase time base is " + str(time))
 
 
         # Add a penalty for being fallen over
         time += (self.brain.fallController.getTimeRemainingEst() *
-                 PBConstants.SEC_TO_MILLIS)
+                 GoTeamConstants.SEC_TO_MILLIS)
 
-        if PBConstants.DEBUG_DETERMINE_CHASE_TIME:
+        if GoTeamConstants.DEBUG_DETERMINE_CHASE_TIME:
             self.printf("\tChase time after fallen over penalty " + str(time))
             self.printf("")
 
         return time
 
 class Ellipse:
-  """
-  Class to hold information about an ellipse
-  """
+    """
+    Class to hold information about an ellipse
+    """
 
-  def __init__(self, center_x, center_y, semimajorAxis, semiminorAxis):
-    self.centerX = center_x
-    self.centerY = center_y
-    self.a = semimajorAxis
-    self.b = semiminorAxis
+    def __init__(self, center_x, center_y, semimajorAxis, semiminorAxis):
+        self.centerX = center_x
+        self.centerY = center_y
+        self.a = semimajorAxis
+        self.b = semiminorAxis
 
-  def getXfromTheta(self, theta):
-    """
-    Method to return an X-value on the curve based on angle from center
-    Theta is in radians
-    """
-    return self.a*cos(theta)+self.centerX
+    def getXfromTheta(self, theta):
+        """
+        Method to return an X-value on the curve based on angle from center
+        Theta is in radians
+        """
+        return self.a*cos(theta)+self.centerX
 
-  def getYfromTheta(self, theta):
-    """
-    Method to return a Y-value on the curve based on angle from center
-    Theta is in radians
-    """
-    return self.b*sin(theta)+self.centerY
+    def getYfromTheta(self, theta):
+        """
+        Method to return a Y-value on the curve based on angle from center
+        Theta is in radians
+        """
+        return self.b*sin(theta)+self.centerY
 
-  def getXfromY(self, y):
-    """
-    Method to determine the two possible x values based on the y value passed
-    """
-    return self.getXfromTheta(asin((y-self.centerY)/self.b))
+    def getXfromY(self, y):
+        """
+        Method to determine the two possible x values based on the y value
+        passed
+        """
+        return self.getXfromTheta(asin((y-self.centerY)/self.b))
 
-  def getYfromX(self, x):
-    """
-    Method to determine the two possible y values based on the x value passed
-    """
-    return self.getYfromTheta(acos((x-self.centerX)/self.a))
+    def getYfromX(self, x):
+        """
+        Method to determine the two possible y values based on the x value
+        passed
+        """
+        return self.getYfromTheta(acos((x-self.centerX)/self.a))
 
-  def getPositionFromTheta(self, theta):
-      """
-      return an (x, y) position from a given angle from the center
-      """
-      return [self.getXfromTheta(theta), self.getYfromTheta(theta)]
+    def getPositionFromTheta(self, theta):
+        """
+        return an (x, y) position from a given angle from the center
+        """
+        return [self.getXfromTheta(theta), self.getYfromTheta(theta)]

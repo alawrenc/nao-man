@@ -1,0 +1,38 @@
+# number of formations
+NUM_FORMATIONS = 17
+# dictionary of formations
+FORMATIONS = dict(zip(range(NUM_FORMATIONS), ("INIT_FORMATION",
+                                              "PENALTY_FORMATION",
+                                              "NO_FIELD_PLAYERS",
+                                              "ONE_FIELD",
+                                              "DEFENSIVE_TWO_FIELD",
+                                              "NEUTRAL_DEFENSE_TWO_FIELD",
+                                              "THREE_FIELD",
+                                              "ONE_DUB_D",
+                                              "TWO_DUB_D",
+                                              "THREE_DUB_D",
+                                              "FINDER",
+                                              "KICKOFF",
+                                              "READY_FORMATION",
+                                              "TEST_DEFEND",
+                                              "TEST_MIDDIE",
+                                              "TEST_OFFEND",
+                                              "TEST_CHASE")))
+# tuple of formations
+(INIT_FORMATION,
+ PENALTY_FORMATION,
+ NO_FIELD_PLAYERS,
+ ONE_FIELD,
+ DEFENSIVE_TWO_FIELD,
+ NEUTRAL_DEFENSE_TWO_FIELD,
+ THREE_FIELD,
+ ONE_DUB_D,
+ TWO_DUB_D,
+ THREE_DUB_D,
+ FINDER,
+ KICKOFF,
+ READY_FORMATION,
+ TEST_DEFEND,
+ TEST_MIDDIE,
+ TEST_OFFEND,
+ TEST_CHASE) = range(NUM_FORMATIONS)
