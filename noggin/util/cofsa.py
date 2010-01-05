@@ -41,17 +41,17 @@ class Coroutine(object):
                 doc = target.__doc__
         self.__name__ = name
         self.__doc__ = doc
+        self.__running = False
 
     def __call__(self, *args, **kwargs):
         '''Return a running coroutine instance.'''
-        if self.send != self._send:
-            raise TypeError("%r already started" % self)
+        if self.__running:
+            raise TypeError("Coroutine called while running", self)
         gen = self.run(*args, **kwargs)
         if not isinstance(self.run, Coroutine):
             gen.next()
         cr = self.clone()
-        # disable calling run()
-        cr.run = self._run_started
+        cr.__running = True
         # enable calling send()
         cr.send = gen.send
         return cr
@@ -60,9 +60,6 @@ class Coroutine(object):
         raise NotImplementedError("no target specified for coroutine %r" %
                                   self)
     run = _run
-
-    def _run_started(self, *args, **kwargs):
-        raise TypeError("Coroutine called while running", self)
     
     def _send(self, arg):
         raise TypeError("Coroutine sent value before start", self)
@@ -70,6 +67,10 @@ class Coroutine(object):
 
     def clone(self):
         return Coroutine(target=self.run, name=self.__name__, doc=self.__doc__)
+
+    @property
+    def running(self):
+        return self.__running
 
     def __eq__(self, other):
         return isinstance(other, Coroutine) and self.run == other.run
