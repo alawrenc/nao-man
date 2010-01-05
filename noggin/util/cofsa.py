@@ -69,15 +69,13 @@ class Coroutine(object):
     send = _send
 
     def clone(self):
-        return Coroutine(self.run, self.__name__, self.__doc__)
+        return Coroutine(target=self.run, name=self.__name__, doc=self.__doc__)
 
     def __eq__(self, other):
         return isinstance(other, Coroutine) and self.run == other.run
 
     def __repr__(self):
-        if self.send == self._send:
-            return "<%s %r>" % (self.__class__.__name__, self.__name__)
-        return "<%s %r, running>" % (self.__class__.__name__, self.__name__)
+        return "<%s %r>" % (self.__class__.__name__, self.__name__)
 
 coroutine = meta_decorator_factory(Coroutine)
 
@@ -141,7 +139,7 @@ class State(Coroutine):
                 name = self.__class__.__name__
             if doc is None:
                 doc = self.__class__.__doc__
-        super(State, self).__init__(target, name, doc)
+        super(State, self).__init__(target=target, name=name, doc=doc)
         # record instance-specific states
         self.states = states
         for name, state in self.states.iteritems():
@@ -149,26 +147,35 @@ class State(Coroutine):
                 raise NameError("Reserved attribute '%s'" % name)
             setattr(self, name, state)
 
-    def statedict(self):
-        # copy keyword states
-        d = dict(self.states)
-        # introspect to find referenced global states & coroutines
-        for name in self.run.func_code.co_names:
-            val = self.run.func_globals.get(name)
-            if isinstance(val, State):
-                d[name] = val
-
     def case(self, *args, **kwargs):
         return Case(self, *args, **kwargs)
 
     def clone(self):
-        return State(self.run, name=self.__name__, doc=self.__doc__,
+        return State(target=self.run, name=self.__name__, doc=self.__doc__,
                     _dowrap=False, **self.states)
 
     def partial(self, *args, **kwargs):
         state = self.clone()
         state.run = functools.partial(state.run, *args, **kwargs)
         return state
+
+    def statedict(self):
+        # copy keyword states
+        d = dict(self.states)
+        func = self._get_func()
+        if hasattr(func, 'func_code') and hasattr(func, 'func_globals'):
+            # introspect code to find referenced global states & coroutines
+            for name in func.func_code.co_names:
+                val = func.func_globals.get(name)
+                if isinstance(val, State):
+                    d[name] = val
+        return d
+
+    def _get_func(self):
+        func = self.run
+        while hasattr(func, 'func'):
+            func = func.func
+        return func
 
 state = meta_decorator_factory(State)
 
@@ -186,8 +193,8 @@ class Case(State):
     def __init__(self, state=state, when=always, reason=''):
         self.when = when
         self.reason = reason
-        super(Case, self).__init__(state.run, state.__name__, state.__doc__,
-                _dowrap=False, **state.states)
+        super(Case, self).__init__(target=state.run, name=state.__name__,
+                doc=state.__doc__, _dowrap=False, **state.states)
     
     def check(self, input):
         return self.when(input)
@@ -208,7 +215,7 @@ class Case(State):
             return FSA_PUSH, self(*args, **kwargs)
 
     def clone(self):
-        return Case(self, self.when, self.reason)
+        return Case(state=self, when=self.when, reason=self.reason)
 
 
 ##
@@ -231,8 +238,9 @@ class FSA(State):
     with no arguments each frame.  Otherwise, step() will pass the FSA
     itself as input.
     '''
-    def __init__(self, input=None, name=None, doc=None):
+    def __init__(self, initial=None, input=None, name=None, doc=None):
         super(FSA, self).__init__(name=name, doc=doc)
+        self.initial = initial
         self.input = input
 
     def step(self):
@@ -244,8 +252,7 @@ class FSA(State):
         except StopIteration:
             warnings.warn(RuntimeWarning(self, 'iteration has ended'))
 
-    # simulate former FSA API
-    def run(self, states=(), verbose=False, debug=False):
+    def run(self, verbose=False, debug=False):
         '''A coroutine implementation of a finite state automaton.
 
         Implements a frame-based finite state automaton with runtime control
@@ -294,7 +301,9 @@ class FSA(State):
         '''
         action = input = value = None
         # initialize state stack
-        stack = list(states)
+        stack = []
+        if self.initial:
+            stack.append(self.initial)
         # wait for initial action tuple
         action, input = yield
         start_time = time.time()
@@ -348,7 +357,11 @@ class FSA(State):
         return FSA_YIELD, cr
 
     def clone(self):
-        return self.__class__(self.input, self.__name__, self.__doc__)
+        return self.__class__(initial=self.initial, input=self.input,
+                              name=self.__name__, doc=self.__doc__)
+
+    def statedict(self):
+        return {'initial': self.initial}
 
     # simulate former FSA API
     @staticmethod
@@ -397,6 +410,28 @@ def fsa(target=None, verbose=False, debug=False, FSA=FSA):
     return f([target], verbose, debug)
 
 
+TABWIDTH = 4
+def print_tree(state, indent=0):
+    if indent:
+        if indent > TABWIDTH:
+            print (' ' * TABWIDTH + '-' * (indent - TABWIDTH - 1) + '>' +
+                    repr(state))
+        else:
+            print ('-' * (indent - 1) + '>' + repr(state))
+    else:
+        print repr(state)
+    prefix = ' ' * indent
+    print prefix + '  ' + state.__doc__
+    if hasattr(state, 'reason'):
+        print prefix + 'reason: ' + state.reason
+    print
+
+    substates = state.statedict()
+    for name in sorted(substates):
+        print prefix + "substate '%s'" % name
+        print_tree(substates[name], indent + TABWIDTH)
+    
+
 
 ##
 # Simple test example
@@ -431,26 +466,17 @@ if __name__ == '__main__':
                 # when next called, the FSA will re-enter here
             else:
                 raise NotImplementedError("shouldn't reach here")
-    
-    # An alternative implementation using class enxtensions
-    #   while I've made it possibly to code States in this manner, it can be
-    #   confusing to use.  Since the State class is a generator factory
-    #   factory, when called this FriendGreeter produces callable instances
-    #   that in turn produce generators when they are called. Overloading
-    #    __init__() should be avoided as run() should take all
-    #   initialization parameters.
-    class FriendGreeter(State):
-        '''Greet only my friends.'''
-        friend = Case(
-                state=hello.partial('!'),
-                when=lambda (friends, person): person in friends,
-                reason='is a friend'
-            )
-        other = Case(
-                state=hello,
-                when=always,
-                reason='otherwise'
-            )
+
+    # An alternative implementation
+    @state(
+        friend = hello.partial('!').case(
+            when=lambda (friends, person): person in friends,
+            reason='is a friend'
+        ),
+        other = hello.case(when=always, reason='otherwise')
+    )
+    def friend_greeter(self, friends):
+        '''Greet my friends warmly.'''
         def run(self, friends):
             input = yield
             while True:
@@ -459,19 +485,17 @@ if __name__ == '__main__':
                     self.friend.enter_or_None(case_input) or
                     self.other.enter_or_yield(case_input)
                     )
-    friend_greeter = FriendGreeter()
 
     # Create a new FSA
     RawNameInputFSA = FSA(
+        initial=friend_greeter.partial(['Billy', 'Joanna']),
         input=functools.partial(raw_input, 'Enter your name: '),
         name='RawNameInputFSA',
-        doc='read from stdin',
+        doc='read from stdin'
         )
     # Run the FSA
-    states = [friend_greeter(['Billy', 'Joanna'])]
-    fsa = RawNameInputFSA(states, debug='-d' in sys.argv[1:])
-    print fsa
-    print '  states', states
+    fsa = RawNameInputFSA(debug='-d' in sys.argv[1:])
+    print_tree(fsa)
     try:
         while True:
             fsa.step()
