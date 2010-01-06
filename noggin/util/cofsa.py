@@ -230,6 +230,12 @@ FSA_PUSH = 2
 FSA_POP = 4
 FSA_SWAP = 6
 
+# repeated action bitmasks
+FSA_REPEAT = 8
+FSA_SKIP = 9
+FSA_PUSHALL = 10
+FSA_POPMANY = 12
+
 class FSA(State):
     '''Finite State Automaton implementation using coroutines.
     
@@ -301,6 +307,23 @@ class FSA(State):
                 push onto the head of the stack, after first popping the
                 current head.  FSA_SWAP is the bitwise OR of FSA_PUSH and
                 FSA_POP.
+
+            FSA_REPEAT
+                Generally, indicates that an operation should be performed
+                multiple times.
+
+            FSA_SKIP
+                Equivalent to FSA_YIELD | FSA_REPEAT.  The value is a
+                number of frames to skip (i.e. yield).  Note that the count
+                includes the current frame
+                (e.g. 5 yields total = this frame + 4 others)
+
+            FSA_PUSHALL
+            FSA_POPMANY
+                These are not yet implemented, but you can guess what they
+                should do.  There remains some complexities about how to
+                handle combinations of these calls with FSA_SKIP.  Perhaps
+                this should be disallowed.
         '''
         action = input = value = None
         # initialize state stack
@@ -316,18 +339,28 @@ class FSA(State):
             # process action
             if action & FSA_POP:
                 action ^= FSA_POP
+                if action & FSA_REPEAT:
+                    raise NotImplementedError("FSA_POPMANY not implemented")
                 if not stack:
                     break
                 stack.pop()
             if action & FSA_PUSH:
                 action ^= FSA_PUSH
+                if action & FSA_REPEAT:
+                    raise NotImplementedError("FSA_PUSHALL not implemented")
                 stack.append(value)
             if action & FSA_YIELD:
                 # wait for next input
                 if verbose:
                     print ('%r: frame completed in %f' %
                             (self, time.time() - start_time))
-                action, input = yield value
+                if action & FSA_REPEAT:
+                    action = FSA_INPUT
+                    while action == FSA_INPUT and value:
+                        action, input = yield value
+                        value -= 1
+                else:
+                    action, input = yield value
                 start_time = time.time()
             elif action == FSA_INPUT:
                 # retrieve head of stack
@@ -370,32 +403,45 @@ class FSA(State):
     # simulate former FSA API
     @staticmethod
     def stay(value=None):
-        ''' --> (int, coroutine).  Helper to generate (FSA_YIELD, value)
-        coroutine action tuple.
-
-        Yield the result of this method to stay in this state coroutine
-        but wait for the next vision frame.
+        ''' --> (FSA_YIELD, value).  Yield this result to stay in
+        the current state but wait for the next vision frame.
         '''
         return FSA_YIELD, value
 
     @staticmethod
     def goNow(state):
-        ''' --> (int, coroutine).  Helper to generate (FSA_SWAP, state)
-        coroutine action tuple.
-        
-        Use this method to switch to a new state immediately.'''
-        return FSA_SWAP, state
+        ''' --> (FSA_SWAP, state).  Yield this result to switch to a new
+        state immediately.  When finished, return control to the parent
+        state (exit this state).'''
+        return (FSA_SWAP, state)
 
     @staticmethod
     def goLater(state):
-        ''' --> (int, coroutine).  Helper to generate
-        (FSA_SWAP | FSA_YIELD, state) coroutine action tuple.
+        ''' --> (FSA_SWAP | FSA_YIELD, state).  Yield this result to
+        switch to a new state after waiting a single frame.  When
+        finished, return control to the parent state (exit this state).'''
+        return (FSA_SWAP | FSA_YIELD, state)
 
-        Use this method to switch to a new state and wait for a new vision
-        frame.
-        '''
-        return FSA_SWAP | FSA_YIELD, state
-    
+    @staticmethod
+    def enterNow(state):
+        ''' --> (FSA_PUSH, state).  Yield this result to enter a new
+        state immediately.  When finished, return control to the current
+        state (return where left off).'''
+        return (FSA_PUSH, state)
+
+    @staticmethod
+    def enterLater(state):
+        ''' --> (FSA_PUSH | FSA_YIELD).  Yield this result to enter a
+        new state after waiting a single frame.  When finished, return
+        control to the current state (return where left off).'''
+        return (FSA_PUSH | FSA_YIELD, state)
+
+    @staticmethod
+    def wait(nframe):
+        ''' --> (FSA_SKIP, nframe).  Yield this result to skip ahead
+        nframe frames.'''
+        return (FSA_SKIP, nframe)
+
     def switchTo(self, state):
         '''Method used to change the state from outside the FSA_'''
         self.send((FSA_SWAP | FSA_YIELD, state))
