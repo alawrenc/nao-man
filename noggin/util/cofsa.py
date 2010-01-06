@@ -449,6 +449,7 @@ class FSA(State):
         return (FSA_SKIP, nframe)
 
     def waitFor(self, case):
+        '''Yield via self.stay() until a case is satisfied.'''
         @state
         def waitForCase(self):
             fsa = yield
@@ -456,6 +457,17 @@ class FSA(State):
                 yield fsa.stay()
             yield (FSA_POP, None)
         return self.enterNow(waitForCase())
+
+    def cascade(self, method, cases, on_failure=None):
+        '''Test a series of cases and use the given control transfer
+        method on the first that succeeds.  On failure of all cases,
+        execute on_failure or stay() if None.'''
+        for case in cases:
+            if case.check(self):
+                return method(case)
+        if on_failure is None:
+            return self.stay()
+        return on_failure()
 
     def switchTo(self, state):
         '''Method used to change the state from outside the FSA_'''
@@ -525,7 +537,7 @@ if __name__ == '__main__':
             # Check our private 'hello' case of the 'hello' state
             if self.hello.check(fsa.input):
                 # say hello to our friend
-                yield self.hello.enter('!')
+                yield fsa.enter(self.hello('!'))
                 # when hello() raises StopIteration, the FSA will yield
                 # when next called, the FSA will re-enter here
             else:
@@ -545,11 +557,9 @@ if __name__ == '__main__':
         is_friend = self.is_friend.prepare(friends)
         fsa = yield
         while True:
-            yield (
-                fsa.enterNow_or_None(is_friend())
-                or fsa.enterNow_or_yield(self.default())
-                )
+            yield fsa.cascade(fsa.enterNow, [is_friend(), self.default()])
 
+    # A version less friendly to strangers
     @state(
         is_friend=hello.case(when=input_in, reason='is_a_friend')
     )
@@ -564,8 +574,8 @@ if __name__ == '__main__':
     # Create a new FSA
     RawNameInputFSA = FSA(
         #target=greeter()
-        #target=friend_greeter(['Billy', 'Joanna']),
-        target=friends_only(['Joe', 'Susan']),
+        target=friend_greeter(['Billy', 'Joanna']),
+        #target=friends_only(['Joe', 'Susan']),
         input=functools.partial(raw_input, 'Enter your name: '),
         name='RawNameInputFSA',
         doc='read from stdin'
