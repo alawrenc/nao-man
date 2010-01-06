@@ -545,8 +545,10 @@ if __name__ == '__main__':
         is_friend = self.is_friend.prepare(friends)
         fsa = yield
         while True:
-            yield (fsa.enterNow_or_None(is_friend()) or
-                    fsa.enterNow_or_yield(self.default()))
+            yield (
+                fsa.enterNow_or_None(is_friend())
+                or fsa.enterNow_or_yield(self.default())
+                )
 
     @state(
         is_friend=hello.case(when=input_in, reason='is_a_friend')
