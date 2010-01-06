@@ -478,18 +478,17 @@ if __name__ == '__main__':
     )
     def friend_greeter(self, friends):
         '''Greet my friends warmly.'''
-        def run(self, friends):
-            input = yield
-            while True:
-                case_input = friends, input
-                input = yield (
-                    self.friend.enter_or_None(case_input) or
-                    self.other.enter_or_yield(case_input)
-                    )
+        input = yield
+        while True:
+            case_input = friends, input
+            input = yield (
+                self.friend.enter_or_None(case_input) or
+                self.other.enter_or_yield(case_input)
+                )
 
     # Create a new FSA
     RawNameInputFSA = FSA(
-        initial=friend_greeter.partial(['Billy', 'Joanna']),
+        initial=friend_greeter(['Billy', 'Joanna']),
         input=functools.partial(raw_input, 'Enter your name: '),
         name='RawNameInputFSA',
         doc='read from stdin'
