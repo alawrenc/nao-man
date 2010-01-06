@@ -185,38 +185,32 @@ state = meta_decorator_factory(State)
 # Case-specific states
 ##
 
-def always(input):
+def always(fsa):
     '''Always true'''
     return True
 
 class Case(State):
     '''An fsa.State that includes a test case function.'''
-    def __init__(self, state=state, when=always, reason=''):
+    def __init__(self, state=state, when=always, reason='', args=(), kwargs={}):
         self.when = when
         self.reason = reason
+        self.__args = args
+        self.__kwargs = kwargs
         super(Case, self).__init__(target=state.run, name=state.__name__,
                 doc=state.__doc__, _dowrap=False, **state.states)
+
+    def prepare(self, *args, **kwargs):
+        c = self.clone()
+        c.__args = c.__args + args
+        c.__kwargs.update(kwargs)
+        return c
     
-    def check(self, input):
-        return self.when(input)
-
-    def enter(self, *args, **kwargs):
-        return FSA_PUSH, self(*args, **kwargs)
-
-    def enterLater(self, *args, **kwargs):
-        return FSA_PUSH | FSA_YIELD, self(*args, **kwargs)
-
-    def enter_or_yield(self, input, *args, **kwargs):
-        if self.check(input):
-            return FSA_PUSH, self(*args, **kwargs)
-        return FSA_YIELD, None
-
-    def enter_or_None(self, input, *args, **kwargs):
-        if self.check(input):
-            return FSA_PUSH, self(*args, **kwargs)
+    def check(self, fsa):
+        return self.when(fsa, *self.__args, **self.__kwargs)
 
     def clone(self):
-        return Case(state=self, when=self.when, reason=self.reason)
+        return Case(state=self, when=self.when, reason=self.reason,
+                    args=self.__args, kwargs=self.__kwargs)
 
 
 ##
@@ -415,6 +409,12 @@ class FSA(State):
         state (exit this state).'''
         return (FSA_SWAP, state)
 
+    def goNow_or_None(self, case):
+        return case.check(self) and self.goNow(case) or None
+
+    def goNow_or_yield(self, case):
+        return case.check(self) and self.goNow(case) or self.stay()
+
     @staticmethod
     def goLater(state):
         ''' --> (FSA_SWAP | FSA_YIELD, state).  Yield this result to
@@ -429,6 +429,12 @@ class FSA(State):
         state (return where left off).'''
         return (FSA_PUSH, state)
 
+    def enterNow_or_None(self, case):
+        return case.check(self) and self.enterNow(case) or None
+
+    def enterNow_or_yield(self, case):
+        return case.check(self) and self.enterNow(case) or self.stay()
+
     @staticmethod
     def enterLater(state):
         ''' --> (FSA_PUSH | FSA_YIELD).  Yield this result to enter a
@@ -441,6 +447,15 @@ class FSA(State):
         ''' --> (FSA_SKIP, nframe).  Yield this result to skip ahead
         nframe frames.'''
         return (FSA_SKIP, nframe)
+
+    def waitFor(self, case):
+        @state
+        def waitForCase(self):
+            fsa = yield
+            while not case.check(fsa):
+                yield fsa.stay()
+            yield (FSA_POP, None)
+        return self.enterNow(waitForCase())
 
     def switchTo(self, state):
         '''Method used to change the state from outside the FSA_'''
@@ -495,7 +510,7 @@ if __name__ == '__main__':
         fsa = yield
         print 'Hello %s%s' % (fsa.input, suffix)
 
-    def always(input):
+    def always(fsa):
         '''Always true'''
         return True
     
@@ -516,26 +531,39 @@ if __name__ == '__main__':
             else:
                 raise NotImplementedError("shouldn't reach here")
 
+    def input_in(fsa, seq):
+        return fsa.input in seq
+
     # An alternative implementation
     @state(
-        friend = hello.partial('!').case(
-            when=lambda (friends, person): person in friends,
-            reason='is a friend'
-        ),
-        other = hello.case(when=always, reason='otherwise')
+        is_friend=hello.case(when=input_in, reason='is a friend')
+                         .partial('!'),
+        default=hello.case(when=always, reason='otherwise')
     )
     def friend_greeter(self, friends):
         '''Greet my friends warmly.'''
+        is_friend = self.is_friend.prepare(friends)
         fsa = yield
         while True:
-            case_input = friends, fsa.input
-            yield (self.friend.enter_or_None(case_input) or
-                    self.other.enter_or_yield(case_input)
-                    )
+            yield (fsa.enterNow_or_None(is_friend()) or
+                    fsa.enterNow_or_yield(self.default()))
+
+    @state(
+        is_friend=hello.case(when=input_in, reason='is_a_friend')
+    )
+    def friends_only(self, friends):
+        '''Greet only my friends.'''
+        is_friend = self.is_friend.prepare(friends)
+        fsa = yield
+        while True:
+            yield fsa.waitFor(is_friend)
+            yield fsa.enterNow(is_friend())
 
     # Create a new FSA
     RawNameInputFSA = FSA(
-        target=friend_greeter(['Billy', 'Joanna']),
+        #target=greeter()
+        #target=friend_greeter(['Billy', 'Joanna']),
+        target=friends_only(['Joe', 'Susan']),
         input=functools.partial(raw_input, 'Enter your name: '),
         name='RawNameInputFSA',
         doc='read from stdin'
