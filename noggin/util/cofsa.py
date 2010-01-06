@@ -234,22 +234,24 @@ class FSA(State):
     '''Finite State Automaton implementation using coroutines.
     
     Implements a core run() method, plus several helper functions that
-    mimic the previous FSA API.  Each call to step() sends an input into
-    the running FSA.  If an input function is provided it will be called
-    with no arguments each frame.  Otherwise, step() will pass the FSA
-    itself as input.
+    mimic the previous FSA API.  Each call to step() sends the a reference
+    to the FSA into its currently running State.  If an input function is
+    provided it will be called with no arguments each frame and will be
+    accessible through the FSA.input variable.
     '''
-    def __init__(self, initial=None, input=None, name=None, doc=None):
-        super(FSA, self).__init__(name=name, doc=doc)
-        self.initial = initial
-        self.input = input
+    def __init__(self, target, input=None, **kwargs):
+        super(FSA, self).__init__(**kwargs)
+        self.__initial = target
+        if input is not None and not hasattr(input, '__call__'):
+            raise TypeError('input argument must be callable')
+        self.__input = input
+        self.input = None
 
     def step(self):
-        input = self
-        if self.input:
-            input = self.input()
+        if self.__input:
+            self.input = self.__input()
         try:
-            self.send((FSA_INPUT, input))
+            self.send((FSA_INPUT, self))
         except StopIteration:
             warnings.warn(RuntimeWarning(self, 'iteration has ended'))
 
@@ -303,8 +305,8 @@ class FSA(State):
         action = input = value = None
         # initialize state stack
         stack = []
-        if self.initial:
-            stack.append(self.initial)
+        if self.__initial:
+            stack.append(self.__initial)
         # wait for initial action tuple
         action, input = yield
         start_time = time.time()
@@ -323,7 +325,8 @@ class FSA(State):
             if action & FSA_YIELD:
                 # wait for next input
                 if verbose:
-                    print 'FSA frame completed in ', time.time() - start_time
+                    print ('%r: frame completed in %f' %
+                            (self, time.time() - start_time))
                 action, input = yield value
                 start_time = time.time()
             elif action == FSA_INPUT:
@@ -358,11 +361,11 @@ class FSA(State):
         return FSA_YIELD, cr
 
     def clone(self):
-        return self.__class__(initial=self.initial, input=self.input,
+        return self.__class__(target=self.__initial, input=self.__input,
                               name=self.__name__, doc=self.__doc__)
 
     def statedict(self):
-        return {'initial': self.initial}
+        return {'initial': self.__initial}
 
     # simulate former FSA API
     @staticmethod
@@ -433,7 +436,6 @@ def print_tree(state, indent=0):
         print_tree(substates[name], indent + TABWIDTH)
     
 
-
 ##
 # Simple test example
 ##
@@ -444,8 +446,8 @@ if __name__ == '__main__':
     @state
     def hello(self, suffix='.'):
         '''Say hello, and exit'''
-        input = yield
-        print 'Hello %s%s' % (input, suffix)
+        fsa = yield
+        print 'Hello %s%s' % (fsa.input, suffix)
 
     def always(input):
         '''Always true'''
@@ -457,12 +459,12 @@ if __name__ == '__main__':
         hello=hello.case(when=always, reason='always'),
     )
     def greeter(self):
-        input = yield
+        fsa = yield
         while True:
             # Check our private 'hello' case of the 'hello' state
-            if self.hello.check(input):
+            if self.hello.check(fsa.input):
                 # say hello to our friend
-                input = yield self.hello.enter('!')
+                yield self.hello.enter('!')
                 # when hello() raises StopIteration, the FSA will yield
                 # when next called, the FSA will re-enter here
             else:
@@ -478,23 +480,23 @@ if __name__ == '__main__':
     )
     def friend_greeter(self, friends):
         '''Greet my friends warmly.'''
-        input = yield
+        fsa = yield
         while True:
-            case_input = friends, input
-            input = yield (
-                self.friend.enter_or_None(case_input) or
-                self.other.enter_or_yield(case_input)
-                )
+            case_input = friends, fsa.input
+            yield (self.friend.enter_or_None(case_input) or
+                    self.other.enter_or_yield(case_input)
+                    )
 
     # Create a new FSA
     RawNameInputFSA = FSA(
-        initial=friend_greeter(['Billy', 'Joanna']),
+        target=friend_greeter(['Billy', 'Joanna']),
         input=functools.partial(raw_input, 'Enter your name: '),
         name='RawNameInputFSA',
         doc='read from stdin'
         )
     # Run the FSA
-    fsa = RawNameInputFSA(debug='-d' in sys.argv[1:])
+    args = sys.argv[1:]
+    fsa = RawNameInputFSA(verbose='-v' in args, debug='-d' in args)
     print_tree(fsa)
     try:
         while True:
