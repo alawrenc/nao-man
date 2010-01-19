@@ -227,20 +227,28 @@ def fancyGoaliePosition(team):
     # might help us stay localized better
     ball = team.brain.ball
     if 0 < ball.locDist < PBConstants.ELLIPSE_POSITION_LIMIT:
-        # Use an ellipse just above the goalline to determine x and y position
-        # We get the angle from goal center to the ball to determine our X,Y
-        theta = MyMath.safe_atan2( ball.y - PBConstants.LARGE_ELLIPSE_CENTER_Y,
-                                   ball.x - PBConstants.LARGE_ELLIPSE_CENTER_X)
-
-        thetaDeg = PBConstants.RAD_TO_DEG * theta
-
-        # Clip the angle so that the (x,y)-coordinate is not too close to the posts
-        if PBConstants.ELLIPSE_ANGLE_MIN > MyMath.sub180Angle(thetaDeg):
-            theta = PBConstants.ELLIPSE_ANGLE_MIN * PBConstants.DEG_TO_RAD
-        elif PBConstants.ELLIPSE_ANGLE_MAX < MyMath.sub180Angle(thetaDeg):
-            theta = PBConstants.ELLIPSE_ANGLE_MAX * PBConstants.DEG_TO_RAD
-
+        theta = findGoalieTheta(team)
         # Determine X,Y of ellipse based on theta, set heading on the ball
         position = team.ellipse.getPositionFromTheta(theta)
 
     return position
+
+def findGoalieTheta(team):
+    ball = team.brain.ball
+    # Use an ellipse just above the goalline to determine x and y position
+    # We get the angle from goal center to the ball to determine our X,Y
+    theta = MyMath.safe_atan2( ball.y - PBConstants.LARGE_ELLIPSE_CENTER_Y,
+                               ball.x - PBConstants.LARGE_ELLIPSE_CENTER_X)
+
+    thetaDeg = PBConstants.RAD_TO_DEG * theta
+
+    # Clip the angle so that the (x,y)-coordinate is not too close to the posts
+    if PBConstants.ELLIPSE_ANGLE_MIN > MyMath.sub180Angle(thetaDeg):
+        theta = PBConstants.ELLIPSE_ANGLE_MIN * PBConstants.DEG_TO_RAD
+    elif PBConstants.ELLIPSE_ANGLE_MAX < MyMath.sub180Angle(thetaDeg):
+        theta = PBConstants.ELLIPSE_ANGLE_MAX * PBConstants.DEG_TO_RAD
+
+    return theta
+
+def getGoaliePositionFromTheta(theta):
+    position = team.ellipse.getPositionFromTheta(theta)

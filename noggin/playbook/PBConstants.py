@@ -266,8 +266,6 @@ RIGHT_WING_MAX_Y = (NogginConstants.FIELD_WIDTH - NogginConstants.GREEN_PAD_Y)
 #GOALIE
 BALL_LOC_LIMIT = 220 # Dist at which we stop active localization and just track
 # elliptical positioning
-GOAL_CENTER_X = NogginConstants.FIELD_WHITE_LEFT_SIDELINE_X
-GOAL_CENTER_Y = NogginConstants.CENTER_FIELD_Y
 ELLIPSE_X_SHIFT = 5. # Increase this to account for the goalposts
 LARGE_ELLIPSE_HEIGHT = NogginConstants.GOALBOX_DEPTH * 0.65 #radius
 LARGE_ELLIPSE_WIDTH = NogginConstants.CROSSBAR_CM_WIDTH / 2.0 #radius
