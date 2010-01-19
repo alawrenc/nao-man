@@ -50,7 +50,7 @@ def chaseAfterKick(player):
     if player.firstFrame():
         player.brain.CoA.setRobotGait(player.brain.motion)
 
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
         if player.chosenKick == SweetMoves.LEFT_FAR_KICK or \
                 player.chosenKick == SweetMoves.RIGHT_FAR_KICK:
@@ -79,7 +79,7 @@ def turnToBall(player):
 
     if player.firstFrame():
         player.hasAlignedOnce = False
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(ball)
         player.brain.CoA.setRobotGait(player.brain.motion)
 
     # Determine the speed to turn to the ball
@@ -158,7 +158,7 @@ def approachBallWithLoc(player):
     if transitions.shouldActiveLoc(player):
         player.brain.tracker.activeLoc()
     else :
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     dest = player.getApproachPosition()
     useOmni = MyMath.dist(my.x, my.y, dest[0], dest[1]) <= \
@@ -191,16 +191,18 @@ def approachBall(player):
     """
     Once we are alligned with the ball, approach it
     """
+    brain = player.brain
+
     if player.firstFrame():
         player.hasAlignedOnce = False
-        player.brain.tracker.trackBall()
-        player.brain.CoA.setRobotGait(player.brain.motion)
+        brain.tracker.trackTarget(brain.ball)
+        brain.CoA.setRobotGait(brain.motion)
 
     #if player.brain.ball.locDist > constants.APPROACH_ACTIVE_LOC_DIST:
     if transitions.shouldActiveLoc(player):
-        player.brain.tracker.activeLoc()
+        brain.tracker.activeLoc()
     else :
-        player.brain.tracker.trackBall()
+        brain.tracker.trackTarget(brain.ball)
 
 
     if player.penaltyKicking and \
@@ -208,7 +210,7 @@ def approachBall(player):
         return player.goNow('penaltyBallInOppGoalbox')
 
     # Switch to other states if we should
-    if player.brain.play.isRole(GOALIE):
+    if brain.play.isRole(GOALIE):
         if transitions.shouldKick(player):
             return player.goNow('waitBeforeKick')
         elif transitions.shouldPositionForKick(player):
@@ -362,15 +364,15 @@ def waitBeforeKick(player):
     if transitions.shouldKick(player):
         return player.goLater('getKickInfo')
     elif transitions.shouldApproachForKick(player):
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
         player.inKickingState = False
         return player.goLater('approachBall')
     elif transitions.shouldScanFindBall(player):
         player.inKickingState = False
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
         return player.goLater('scanFindBall')
     elif transitions.shouldRepositionForKick(player):
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
         return player.goLater('positionForKick')
 
     # Just don't get stuck here!
@@ -524,7 +526,7 @@ def orbitBeforeKick(player):
     if player.firstFrame():
         player.orbitStartH = my.h
         brain.CoA.setRobotGait(brain.motion)
-        brain.tracker.trackBall()
+        player.tracker.trackTarget(brain.ball)
 
         shotPoint = KickingHelpers.getShotCloseAimPoint(player)
         bearingToGoal = MyMath.getRelativeBearing(my.x, my.y, my.h,
@@ -532,13 +534,13 @@ def orbitBeforeKick(player):
                                                   shotPoint[1] )
         spinDir = -MyMath.sign(bearingToGoal)
         player.brain.nav.orbitAngle(spinDir * 90)
-    if not player.brain.tracker.activeLocOn and \
+    if not brain.tracker.activeLocOn and \
             transitions.shouldScanFindBall(player):
-        player.brain.CoA.setRobotGait(player.brain.motion)
+        brain.CoA.setRobotGait(player.brain.motion)
         return player.goLater('scanFindBall')
     elif brain.ball.dist > constants.STOP_ORBIT_BALL_DIST:
         return player.goLater('chase')
 
-    if player.brain.nav.isStopped() and not player.firstFrame():
+    if brain.nav.isStopped() and not player.firstFrame():
         return player.goLater('positionForKick')
     return player.stay()

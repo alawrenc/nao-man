@@ -70,7 +70,7 @@ def squatPosition(player):
 
 def chasePrepare(player):
     if player.firstFrame():
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
         player.isChasing = False
 
         if player.squatting:

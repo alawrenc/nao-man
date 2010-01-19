@@ -12,7 +12,7 @@ def scanFindBall(player):
     """
     if player.firstFrame():
         player.stopWalking()
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     if player.brain.play.isRole(GOALIE):
         if transitions.shouldTurnToBall_FoundBall(player):
@@ -21,7 +21,7 @@ def scanFindBall(player):
             return player.goLater('spinFindBall')
     else:
         if transitions.shouldApproachBallWithLoc(player):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
             return player.goLater('approachBallWithLoc')
         elif transitions.shouldSpinFindBall(player):
             return player.goLater('spinFindBall')
@@ -50,23 +50,23 @@ def spinFindBall(player):
 
     if player.brain.play.isRole(GOALIE):
         if transitions.shouldApproachBall(player):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
             return player.goLater('approachBall')
         elif transitions.shouldTurnToBall_FoundBall(player):
             return player.goLater('turnToBall')
     else:
         if transitions.shouldApproachBallWithLoc(player):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
             return player.goLater('approachBallWithLoc')
         elif transitions.shouldApproachBall(player):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
             return player.goLater('approachBall')
         elif transitions.shouldTurnToBall_FoundBall(player):
             return player.goLater('turnToBall')
         elif transitions.shouldWalkToBallLocPos(player):
             return player.goLater('walkToBallLocPos')
     if player.firstFrame():
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
         if player.justKicked:
             spinDir = player.getSpinDirAfterKick()
@@ -81,14 +81,16 @@ def spinFindBall(player):
     return player.stay()
 
 def walkToBallLocPos(player):
-    player.brain.tracker.trackBall()
+    ball = player.brain.ball
+
+    player.brain.tracker.trackTarget(ball)
     if transitions.shouldApproachBallWithLoc(player):
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(ball)
         return player.goLater('approachBallWithLoc')
     elif transitions.shouldTurnToBall_FoundBall(player):
         return player.goLater('turnToBall')
 
-    ball = player.brain.ball
+
     destH = MyMath.getTargetHeading(player.brain.my, ball.x, ball.y)
     dest = (ball.x, ball.y, destH)
 

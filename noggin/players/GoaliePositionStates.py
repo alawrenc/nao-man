@@ -25,19 +25,19 @@ def goalieAwesomePosition(player):
     position = brain.play.getPosition()
     nav = brain.nav
     my = brain.my
+    ball = brain.ball
 
     if player.firstFrame():
         player.changeOmniGoToCounter = 0
 
     if brain.ball.dist >= constants.ACTIVE_LOC_THRESH:
-        player.brain.tracker.activeLoc()
+        brain.tracker.activeLoc()
     else:
-        player.brain.tracker.trackBall()
+        brain.tracker.trackTarget(brain.ball)
 
     useOmni = helper.useOmni(player)
     changedOmni = False
 
-    ball = brain.ball
     bearing = None
     if ball.on:
         bearing = ball.bearing
@@ -54,12 +54,13 @@ def goalieAwesomePosition(player):
             nav.omniGoTo((position[0], position[1], my.h + bearing))
     else:
         return player.goLater("goalieAtPosition")
+
     return player.stay()
 
 def goaliePositionForSave(player):
     if player.firstFrame():
         player.stopWalking()
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     strafeDir = helper.strafeDirForSave(player)
     if strafeDir == -1:
@@ -74,7 +75,7 @@ def goaliePositionForSave(player):
 def goaliePositionBallClose(player):
 
     nav = player.brain.nav
-    player.brain.tracker.trackBall()
+    player.brain.tracker.trackTarget(player.brain.ball)
 
     #if not nav.atHeading(NogginConstants.OPP_GOAL_HEADING):
     #    return player.goLater('goalieSpinToPosition')
@@ -117,7 +118,7 @@ def goalieSpinToPosition(player):
     if helper.useFarPosition(player):
         player.brain.tracker.activeLoc()
     else:
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     if not nav.atHeading(NogginConstants.OPP_GOAL_HEADING):
         spinDir = MyMath.getSpinDir(player.brain.my.h,
@@ -135,7 +136,7 @@ def goalieOutOfPosition(player):
     if helper.useFarPosition(player):
         player.brain.tracker.activeLoc()
     else:
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     position = player.brain.play.getPosition()
     if player.firstFrame() or\
@@ -155,9 +156,9 @@ def goalieAtPosition(player):
     brain = player.brain
     nav = player.brain.nav
     if brain.ball.dist >= constants.ACTIVE_LOC_THRESH:
-        player.brain.tracker.activeLoc()
+        brain.tracker.activeLoc()
     else:
-        player.brain.tracker.trackBall()
+        brain.tracker.trackTarget(brain.ball)
 
     # Check that the position is correct
     position = player.brain.play.getPosition()

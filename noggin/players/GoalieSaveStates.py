@@ -76,7 +76,7 @@ def holdCenterSave(player):
 def postSave(player):
     player.standup()
     #if player.brain.ball.on:
-    player.brain.tracker.trackBall()
+    player.brain.tracker.trackTarget(player.brain.ball)
     #else: do not yet created postSaveScan
     roleState = player.getRoleState(player.currentRole)
     player.saving = False

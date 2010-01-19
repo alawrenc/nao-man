@@ -115,10 +115,11 @@ def spinToBall(player):
     """
     State to spin to turn to the ball
     """
+    ball = player.brain.ball
     if player.firstFrame():
         player.stopWalking()
-        player.brain.tracker.trackBall()
-    ball = player.brain.ball
+        player.brain.tracker.trackTarget(ball)
+
 
     turnRate = MyMath.clip(ball.locBearing*ChaseConstants.BALL_SPIN_GAIN,
                            -ChaseConstants.BALL_SPIN_SPEED,
@@ -157,14 +158,16 @@ def spinFindBallPosition(player):
     """
     Spin to find the ball if it is not being seen.
     """
-    if player.brain.nav.isStopped():
+    brain = player.brain
+
+    if brain.nav.isStopped():
         player.stoppedWalk = True
 
     if player.firstFrame() and player.stoppedWalk:
         player.setSpeed(0,
                         0,
                         ChaseConstants.FIND_BALL_SPIN_SPEED)
-        player.brain.tracker.trackBall()
+        brain.tracker.trackTarget(brain.ball)
 
 
     if transitions.shouldTurnToBall_fromAtBallPosition(player):
@@ -175,14 +178,16 @@ def spinFindBallPosition(player):
     return player.stay()
 
 def relocalize(player):
+    brain = player.brain
+
     if player.firstFrame():
         player.stopWalking()
-    if player.brain.my.locScore == NogginConstants.GOOD_LOC or \
-            player.brain.my.locScore == NogginConstants.OK_LOC:
+    if brain.my.locScore == NogginConstants.GOOD_LOC or \
+            brain.my.locScore == NogginConstants.OK_LOC:
         return player.goLater(player.lastDiffState)
 
-    if not player.brain.motion.isHeadActive():
-        player.brain.tracker.locPans()
+    if not brain.motion.isHeadActive():
+        brain.tracker.locPans()
 
     if player.counter > constants.RELOC_SPIN_FRAME_THRESH:
         player.setSpeed(0 , 0, constants.RELOC_SPIN_SPEED)

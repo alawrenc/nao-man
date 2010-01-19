@@ -32,12 +32,13 @@ def getKickInfo(player):
         player.kickDecider.collectData(player.brain)
         return player.stay()
 
+    ball = player.brain.ball
     # Done scanning time to act
-    player.brain.tracker.trackBall()
+    player.brain.tracker.trackTarget(ball)
     player.kickDecider.calculate()
 
-    if not player.brain.ball.on:
-        if player.brain.ball.framesOff < 100: # HACK, should be constant
+    if not ball.on:
+        if ball.framesOff < 100: # HACK, should be constant
             return player.stay()
         else :
             player.inKickingState = False
@@ -357,7 +358,7 @@ def kickBallStraightShort(player):
         return player.stay()
 
 
-    player.brain.tracker.trackBall()
+    player.brain.tracker.trackTarget(player.brain.ball)
 
     ballForeFoot = player.kickDecider.ballForeFoot
     if ballForeFoot == constants.LEFT_FOOT:
@@ -391,7 +392,7 @@ def kickBallStraight(player):
     else :
         return player.stay()
 
-    player.brain.tracker.trackBall()
+    player.brain.tracker.trackTarget(player.brain.ball)
 
     ballForeFoot = player.kickDecider.ballForeFoot
     if ballForeFoot == constants.LEFT_FOOT:
@@ -451,7 +452,7 @@ def kickBallLeftShort(player):
 
 def sideStepForSideKick(player):
     if player.firstFrame():
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
 
     # Which foot is the ball in front of?
     if player.brain.ball.on:
@@ -482,10 +483,11 @@ def sideStepForSideKick(player):
 
 
 def alignForSideKick(player):
+    ball = player.brain.ball
     if player.firstFrame():
         player.brain.CoA.setRobotSlowGait(player.brain.motion)
-        player.brain.tracker.trackBall()
-    ball = player.brain.ball
+        player.brain.tracker.trackTarget(ball)
+
     if ball.on and player.brain.nav.isStopped():
         player.kickDecider.ballForeWhichFoot()
         ballForeFoot = player.kickDecider.ballForeFoot
@@ -510,11 +512,12 @@ def alignForSideKick(player):
     return player.stay()
 
 def stepForRightFootKick(player):
+    ball = player.brain.ball
+
     if player.firstFrame():
         player.brain.CoA.setRobotSlowGait(player.brain.motion)
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(ball)
 
-    ball = player.brain.ball
     if ball.on:
         player.kickDecider.ballForeWhichFoot()
         ballForeFoot = player.kickDecider.ballForeFoot
@@ -543,11 +546,12 @@ def stepForRightFootKick(player):
     return player.stay()
 
 def stepForLeftFootKick(player):
+    ball = player.brain.ball
+
     if player.firstFrame():
         player.brain.CoA.setRobotSlowGait(player.brain.motion)
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(ball)
 
-    ball = player.brain.ball
     if ball.on and player.brain.nav.isStopped():
         player.kickDecider.ballForeWhichFoot()
         ballForeFoot = player.kickDecider.ballForeFoot
@@ -593,9 +597,11 @@ def alignOnBallStraightKick(player):
     return player.stay()
 
 def kickBallExecute(player):
+    ball = player.brain.ball
+
     if player.firstFrame():
         player.brain.CoA.setRobotGait(player.brain.motion)
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(ball)
         player.executeMove(player.chosenKick)
 
         if not player.penaltyMadeFirstKick:
@@ -603,8 +609,8 @@ def kickBallExecute(player):
         elif not player.penaltyMadeSecondKick:
             player.penaltyMadeSecondKick = True
 
-    if not player.brain.ball.on and \
-            player.brain.ball.framesOff > constants.LOOK_POST_KICK_FRAMES_OFF:
+    if not ball.on and \
+           ball.framesOff > constants.LOOK_POST_KICK_FRAMES_OFF:
         player.lookPostKick()
 
     if player.stateTime >= SweetMoves.getMoveTime(player.chosenKick):
@@ -650,7 +656,7 @@ def kickAtPosition(player):
     Used for a very simple goalie behavior
     """
     if player.firstFrame():
-        player.brain.tracker.trackBall()
+        player.brain.tracker.trackTarget(player.brain.ball)
         player.executeStiffness(StiffnessModes.LEFT_FAR_KICK_STIFFNESS)
     if player.counter == 2:
         player.executeMove(SweetMoves.LEFT_FAR_KICK)

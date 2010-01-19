@@ -100,7 +100,7 @@ def gameSet(player):
             return player.goLater('squat')
 
         if player.brain.play.isRole(CHASER):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
         else:
             player.brain.tracker.activeLoc()
 
@@ -139,7 +139,7 @@ def penaltyShotsGameSet(player):
         if player.lastDiffState == 'gamePenalized':
             player.brain.resetLocalization()
         if player.brain.play.isRole(GOALIE):
-            player.brain.tracker.trackBall()
+            player.brain.tracker.trackTarget(player.brain.ball)
         else:
             player.brain.tracker.activeLoc()
     if player.brain.play.isRole(GOALIE):
