@@ -60,7 +60,7 @@ class Coroutine(object):
         raise NotImplementedError("no target specified for coroutine %r" %
                                   self)
     run = _run
-    
+
     def _send(self, arg):
         raise TypeError("Coroutine sent value before start", self)
     send = _send
@@ -98,7 +98,7 @@ class State(Coroutine):
     execute up to the first yield statement when first called.
 
     Examples:
-    
+
     @fsa.state
     def foo(self):
         """The foo state"""
@@ -181,7 +181,7 @@ class State(Coroutine):
 state = meta_decorator_factory(State)
 
 
-## 
+##
 # Case-specific states
 ##
 
@@ -204,7 +204,7 @@ class Case(State):
         c.__args = c.__args + args
         c.__kwargs.update(kwargs)
         return c
-    
+
     def check(self, fsa):
         return self.when(fsa, *self.__args, **self.__kwargs)
 
@@ -232,7 +232,7 @@ FSA_POPMANY = 12
 
 class FSA(State):
     '''Finite State Automaton implementation using coroutines.
-    
+
     Implements a core run() method, plus several helper functions that
     mimic the previous FSA API.  Each call to step() sends the a reference
     to the FSA into its currently running State.  If an input function is
@@ -263,11 +263,11 @@ class FSA(State):
         (action, value) is expected as input to control the operation on a
         stack of sub-state coroutines.  When coroutines in the stack are
         executed, they are expected to yield tuples in the same format. The
-        stack may be initially filled through the 'states' argument. 
-    
+        stack may be initially filled through the 'states' argument.
+
         For the (action, value) tuple, the value field depends on the action.
         The action may be a bit-wise OR of one or more of the following:
-    
+
             FSA_INPUT
                 The value is an input value to be sent to the coroutine at
                 the top of the stack.  Execution will continue to follow the
@@ -275,7 +275,7 @@ class FSA(State):
                 FSA_YIELD.  As this is expected to be used only externally,
                 the bit mask is 0 and will only be executed if none of the
                 following flags are specified.
-    
+
             FSA_YIELD
                 No value is required (default None). Implies the frame is
                 finished and the FSA should itself yield value to wait for
@@ -288,14 +288,14 @@ class FSA(State):
                 been returned explicitly.  When combined with any of the
                 following flags, the requested actions will occur before the
                 FSA yields.
-    
+
             FSA_PUSH
                 The value is an fsa.Coroutine instance that the FSA should
                 push onto the head of the stack.
 
             FSA_POP
                 No value is required.  Pops a coroutine from the stack.
-    
+
             FSA_SWAP
                 The value is an fsa.Coroutine instance that the FSA should
                 push onto the head of the stack, after first popping the
@@ -476,7 +476,7 @@ class FSA(State):
 def fsa(target=None, verbose=False, debug=False, FSA=FSA):
     '''Decorate a function with an fsa.FSA instance.
 
-    If the function isn't supplied initially, act as a meta deocrator and
+    If the function isnt supplied initially, act as a meta deocrator and
     return another decorator expecting the function.'''
     if target is None:
         def meta_decorator(final_target):
@@ -507,7 +507,7 @@ def print_tree(state, indent=0):
     for name in sorted(substates):
         print prefix + "substate '%s'" % name
         print_tree(substates[name], indent + TABWIDTH)
-    
+
 
 ##
 # Simple test example
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     def always(fsa):
         '''Always true'''
         return True
-    
+
     @state(
         name='Cheerful Greeter',
         doc='Greet every input with a cheerful hello!',
@@ -589,4 +589,3 @@ if __name__ == '__main__':
             fsa.step()
     except (KeyboardInterrupt, EOFError):
         print '\nGoodbye!'
-

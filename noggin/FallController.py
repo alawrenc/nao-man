@@ -1,17 +1,17 @@
 from man.motion import SweetMoves as SweetMoves
 from . import FallStates
-from .util import FSA
+from .util import cofsa
 
-class FallController(FSA.FSA):
+class FallController(cofsa.FSA):
     def __init__(self, brain):
-        FSA.FSA.__init__(self,brain)
+        cofsa.FSA.__init__(self,brain)
         self.brain = brain
-        self.addStates(FallStates)
+        #self.addStates(FallStates)
         self.currentState = 'notFallen'
-        self.setName('FallController')
-        self.setPrintStateChanges(True)
+        #self.setName('FallController')
+        #self.setPrintStateChanges(True)
         self.stateChangeColor = 'blue'
-        self.setPrintFunction(self.brain.out.printf)
+        #self.setPrintFunction(self.brain.out.printf)
         self.standingUp = False
         self.fallCount = 0
         self.FALLEN_THRESH = 72
@@ -34,7 +34,7 @@ class FallController(FSA.FSA):
                 self.switchTo('fallen')
                 #         elif self.brain.guardian.falling:
                 #             self.switchTo('falling')
-        FSA.FSA.run(self)
+        cofsa.FSA.run(self)
 
     def isFallen(self):
         inertial = self.brain.sensors.inertial

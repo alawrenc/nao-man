@@ -1,34 +1,39 @@
 
 from man.motion import SweetMoves as SweetMoves
+from man.motion import HeadMoves as HeadMoves
+from .util import cofsa as fsa
 
 """
 Fall Protection and Recovery States
 """
+@fsa.state
 def fallen(guard):
     """
     Activates when robot has fallen. Deactivates player
     and puts standup in motion
     """
-    if guard.firstFrame():
-        guard.brain.roboguardian.enableFallProtection(False)
-        guard.brain.tracker.stopHeadMoves()
-        guard.brain.motion.resetWalk()
-        guard.brain.motion.resetScripted()
-        guard.brain.motion.stopHeadMoves()
-        guard.brain.player.gainsOn()
-
+    guard.brain.roboguardian.enableFallProtection(False)
+    guard.brain.tracker.stopHeadMoves()
+    guard.brain.motion.resetWalk()
+    guard.brain.motion.resetScripted()
+    guard.brain.motion.stopHeadMoves()
+    guard.brain.player.gainsOn()
+    yield
+    #everything above was in a 'if firstFrame():', we automatically make the first call to get to here on creation, right?
     # Put player into safe mode
+    while True:
+        guard.brain.player.switchTo('fallen')
+        yield guard.goLater('standup')
 
-    guard.brain.player.switchTo('fallen')
-    return guard.goLater('standup')
-
+@fsa.state
 def falling(guard):
     """
     Protect the robot when it is falling.
     """
     guard.brain.tracker.stopHeadMoves()
-    return guard.goLater('notFallen')
+    yield guard.goLater('notFallen')
 
+@fsa.state
 def standup(guard):
     """
     Performs the appropriate standup routine
@@ -36,57 +41,68 @@ def standup(guard):
     inertial = guard.brain.sensors.inertial
     #guard.printf("standup angleY is "+str(inertial.angleY))
 
-    if guard.firstFrame():
-        guard.brain.tracker.stopHeadMoves()
-        guard.brain.tracker.setNeutralHead()
+    guard.brain.tracker.stopHeadMoves()
+    guard.brain.tracker.setNeutralHead()
+    yield
 
-    # If on back, perform back stand up
-    if ( inertial.angleY < -guard.FALLEN_THRESH ):
-        return guard.goLater('standFromBack')
+    while True:
+        # If on back, perform back stand up
+        if ( inertial.angleY < -guard.FALLEN_THRESH ):
+            yield guard.goLater('standFromBack')
 
-    # If on stomach, perform stand up from front
-    elif ( inertial.angleY > guard.FALLEN_THRESH ):
-        return guard.goLater('standFromFront')
-    return guard.stay()
+            # If on stomach, perform stand up from front
+        elif ( inertial.angleY > guard.FALLEN_THRESH ):
+            yield guard.goLater('standFromFront')
 
+        yield guard.stay()
+
+@fsa.state
 def standFromBack(guard):
-    if guard.firstFrame():
-        guard.brain.player.executeMove(SweetMoves.STAND_UP_BACK)
-        guard.standupMoveTime = SweetMoves.getMoveTime(SweetMoves.STAND_UP_BACK)
+    guard.brain.player.executeMove(SweetMoves.STAND_UP_BACK)
+    guard.standupMoveTime = SweetMoves.getMoveTime(SweetMoves.STAND_UP_BACK)
+    yield
 
-    return guard.goLater('standing')
+    while True:
+        yield guard.goLater('standing')
 
+@fsa.state
 def standFromFront(guard):
-    if guard.firstFrame():
-        guard.brain.player.executeMove(SweetMoves.STAND_UP_FRONT)
-        guard.standupMoveTime = SweetMoves.getMoveTime(SweetMoves.STAND_UP_FRONT)
+    guard.brain.player.executeMove(SweetMoves.STAND_UP_FRONT)
+    guard.standupMoveTime = SweetMoves.getMoveTime(SweetMoves.STAND_UP_FRONT)
+    yield
 
-    return guard.goLater('standing')
+    while True:
+        yield guard.goLater('standing')
 
+@fsa.state
 def standing(guard):
-    if guard.stateTime <= guard.standupMoveTime:
-        return guard.stay()
+    while guard.stateTime <= guard.standupMoveTime:
+        yield guard.stay()
 
-    return guard.goLater('doneStanding')
+    yield guard.goLater('doneStanding')
 
+@fsa.state
 def doneStanding(guard):
     """
     Does clean up after standing up.
     """
-    if guard.firstFrame():
-        guard.brain.player.gainsOn()
-        guard.brain.player.stopWalking()
+    guard.brain.player.gainsOn()
+    guard.brain.player.stopWalking()
+    yield
 
-    guard.brain.player.switchTo(guard.brain.gameController.currentState)
-    return guard.goLater('notFallen')
+    while True:
+        guard.brain.player.switchTo(guard.brain.gameController.currentState)
+        yield guard.goLater('notFallen')
 
+@fsa.state
 def notFallen(guard):
-    if guard.firstFrame():
-        guard.standingUp = False
-        guard.brain.roboguardian.enableFallProtection(True)
+    guard.standingUp = False
+    guard.brain.roboguardian.enableFallProtection(True)
+    yield
     """
     Does nothing
     """
-    return guard.stay()
+    while True:
+        yield guard.stay()
 
 
