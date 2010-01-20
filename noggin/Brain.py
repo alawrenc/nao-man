@@ -27,6 +27,8 @@ from . import robots
 from .playbook import PBInterface
 from .players import Switch
 
+from .util import CoFSA
+
 import _roboguardian
 
 class Brain(object):
@@ -90,6 +92,7 @@ class Brain(object):
         self.playbook = PBInterface.PBInterface(self)
         self.gameController = GameController.GameController(self)
         self.fallController = FallController.FallController(self)
+        cofsa.print_tree(self.fallcontroller)
 
     def initFieldObjects(self):
         """
@@ -196,7 +199,7 @@ class Brain(object):
 
         # Behavior stuff
         self.gameController.run()
-        self.fallController.run()
+        self.fallController.step()
         self.updatePlaybook()
         self.player.run()
         self.tracker.run()

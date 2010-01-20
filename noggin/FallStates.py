@@ -6,12 +6,13 @@ from .util import cofsa as fsa
 """
 Fall Protection and Recovery States
 """
-@fsa.state
+@fsa.state(
+    name = 'fallen'
+    doc = 'Activates when robot has fallen. Deactivates player and puts standup in\
+    motion'
+    )
 def fallen(guard):
-    """
-    Activates when robot has fallen. Deactivates player
-    and puts standup in motion
-    """
+
     guard.brain.roboguardian.enableFallProtection(False)
     guard.brain.tracker.stopHeadMoves()
     guard.brain.motion.resetWalk()
@@ -19,7 +20,7 @@ def fallen(guard):
     guard.brain.motion.stopHeadMoves()
     guard.brain.player.gainsOn()
     yield
-    #everything above was in a 'if firstFrame():', we automatically make the first call to get to here on creation, right?
+
     # Put player into safe mode
     while True:
         guard.brain.player.switchTo('fallen')

@@ -2,15 +2,19 @@ from man.motion import SweetMoves as SweetMoves
 from . import FallStates
 from .util import cofsa
 
-class FallController(cofsa.FSA):
+@cofsa.FSA (
+    target = FallStates.notFallen(),
+    name = 'FallController',
+    doc = 'takes over when we fall until we stand back up',
+    )
+class FallController:
     def __init__(self, brain):
-        cofsa.FSA.__init__(self,brain)
         self.brain = brain
         #self.addStates(FallStates)
-        self.currentState = 'notFallen'
+        #self.currentState = 'notFallen'
         #self.setName('FallController')
         #self.setPrintStateChanges(True)
-        self.stateChangeColor = 'blue'
+        #self.stateChangeColor = 'blue'
         #self.setPrintFunction(self.brain.out.printf)
         self.standingUp = False
         self.fallCount = 0
@@ -31,10 +35,9 @@ class FallController(cofsa.FSA):
             if (not self.standingUp and self.isFallen() ):
                 self.standingUp = True
                 self.fallCount = 0
-                self.switchTo('fallen')
+                self.switchTo('FallStates.fallen')
                 #         elif self.brain.guardian.falling:
                 #             self.switchTo('falling')
-        cofsa.FSA.run(self)
 
     def isFallen(self):
         inertial = self.brain.sensors.inertial
@@ -50,8 +53,8 @@ class FallController(cofsa.FSA):
         return False
 
     def getTimeRemainingEst(self):
-        if (self.currentState == "notFallen" or
-            self.currentState == "doneStanding"):
+        if (self.currentState == "FallStates.notFallen" or
+            self.currentState == "FallStates.doneStanding"):
             return 0
         else:
             return SweetMoves.getMoveTime(SweetMoves.STAND_UP_FRONT)
