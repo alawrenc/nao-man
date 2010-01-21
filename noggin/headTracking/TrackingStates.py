@@ -70,7 +70,7 @@ def activeTracking(tracker):
     if tracker.target.framesOff > constants.TRACKER_FRAMES_OFF_REFIND_THRESH \
             and not tracker.brain.motion.isHeadActive() \
             and not (tracker.activePanUp or tracker.activePanOut):
-        return tracker.goLater('activeLocScan')
+        return tracker.goLater('lookToTarget')
 
     elif not (tracker.activePanOut or tracker.activePanUp) and \
             tracker.counter <= constants.ACTIVE_LOC_STARE_THRESH:

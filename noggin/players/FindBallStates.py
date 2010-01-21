@@ -85,7 +85,7 @@ def walkToBallLocPos(player):
 
     player.brain.tracker.trackTarget(ball)
     if transitions.shouldApproachBallWithLoc(player):
-        player.brain.tracker.trackTarget(ball)
+        #player.brain.tracker.trackTarget(ball)
         return player.goLater('approachBallWithLoc')
     elif transitions.shouldTurnToBall_FoundBall(player):
         return player.goLater('turnToBall')

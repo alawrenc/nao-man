@@ -79,6 +79,7 @@ def turnToBall(player):
 
     if player.firstFrame():
         player.hasAlignedOnce = False
+        #this is messing with loc. we'll be in activeTracking and this kicks us out
         player.brain.tracker.trackTarget(ball)
         player.brain.CoA.setRobotGait(player.brain.motion)
 

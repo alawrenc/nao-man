@@ -93,6 +93,7 @@ def returnHeadsPan(tracker):
     """
     if tracker.firstFrame():
         tracker.brain.motion.stopHeadMoves()
+        #tracker.helper.lookToPoint(tracker.target)
         tracker.helper.panTo(tracker.preActivePanHeads)
         return tracker.stay()
 
