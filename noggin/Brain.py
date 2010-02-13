@@ -13,7 +13,7 @@ import sensors
 
 # Modules from this directory
 from . import GameController
-from . import FallController
+from . import FallStates
 from .headTracking import HeadTracking
 from . import Navigator
 from .util import NaoOutput
@@ -91,8 +91,9 @@ class Brain(object):
         self.nav = Navigator.Navigator(self)
         self.playbook = PBInterface.PBInterface(self)
         self.gameController = GameController.GameController(self)
-        self.fallController = FallController.FallController(self)
-        cofsa.print_tree(self.fallcontroller)
+        FallControllerFSA = CoFSA (target = FallStates.notFallen(), name='FallControllerFSA', doc='blow me')
+        self.fallController = FallControllerFSA
+        CoFSA.print_tree(self.fallcontroller)
 
     def initFieldObjects(self):
         """

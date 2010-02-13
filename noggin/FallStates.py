@@ -1,13 +1,12 @@
 
 from man.motion import SweetMoves as SweetMoves
-from man.motion import HeadMoves as HeadMoves
-from .util import cofsa as fsa
+from .util import CoFSA as fsa
 
 """
 Fall Protection and Recovery States
 """
 @fsa.state(
-    name = 'fallen'
+    name = 'fallen',
     doc = 'Activates when robot has fallen. Deactivates player and puts standup in\
     motion'
     )
@@ -104,6 +103,6 @@ def notFallen(guard):
     Does nothing
     """
     while True:
-        yield guard.stay()
+        yield brain.stay()
 
 
