@@ -9,6 +9,62 @@ from math import fabs
 
 DEBUG = False
 
+def positioningPlaybook(nav):
+    """positions us in ready state"""
+    if nav.firstFrame():
+        nav.walkToPointCount = 0
+
+    my = nav.brain.my
+    dest = nav.dest
+
+    useFinalHeading = transitions.useFinalHeading(player, dest)
+
+    if useFinalHeading:
+        # keep bearing to the ball
+        pass
+    else:
+        dest.h = my.getTargetHeading(dest)
+
+    if nav.brain.play.isRole(GOALIE):
+        if helper.atDestinationGoalie(my, dest) and helper.atHeading(my, dest.h):
+            return nav.goNow('stop')
+    else:
+        if helper.atDestinationCloser(my, dest) and helper.atHeading(my, dest.h):
+            return nav.goNow('stop')
+
+    nav.walkX, nav.walkY, nav.walkTheta = helper.getOmniWalkParam(my, dest)
+    helper.setSpeed(nav.brain.motion, nav.walkX, nav.walkY, nav.walkTheta)
+
+    return nav.stay()
+
+def positioningReady(nav):
+    """positions us in ready state"""
+    if nav.firstFrame():
+        nav.walkToPointCount = 0
+
+    my = nav.brain.my
+    dest = nav.dest
+
+    useFinalHeading = transitions.useFinalHeading(player, dest)
+
+    if useFinalHeading:
+        dest.h = NogginConstants.OPP_GOAL_HEADING
+    else:
+        dest.h = my.getTargetHeading(dest)
+
+    if nav.brain.play.isRole(GOALIE):
+        if helper.atDestinationGoalie(my, dest) and helper.atHeading(my, dest.h):
+            return nav.goNow('stop')
+    else:
+        if helper.atDestinationCloser(my, dest) and helper.atHeading(my, dest.h):
+            return nav.goNow('stop')
+
+    nav.walkX, nav.walkY, nav.walkTheta = helper.getOmniWalkParam(my, dest)
+    helper.setSpeed(nav.brain.motion, nav.walkX, nav.walkY, nav.walkTheta)
+
+    return nav.stay()
+
+
 def doingSweetMove(nav):
     '''executes the currently set sweetmove'''
     motion = nav.brain.motion
@@ -17,7 +73,7 @@ def doingSweetMove(nav):
         helper.setSpeed(motion, 0, 0, 0)
         helper.executeMove(motion, nav.sweetMove)
 
-    if not nav.brain.motion.isBodyActive():
+    if not motion.isBodyActive():
         del nav.sweetMove
         return nav.goNow('stopped')
 
@@ -222,7 +278,7 @@ def stopped(nav):
 def orbitPoint(nav):
     if nav.updatedTrajectory:
         helper.setSpeed(nav.brain.motion, nav.walkX, nav.walkY, nav.walkTheta)
-        self.updatedTrajectory = False
+        nav.updatedTrajectory = False
 
     return nav.stay()
 
