@@ -69,4 +69,4 @@ SET( CMAKE_C_FLAGS "--sysroot ${OE_CROSS_DIR}/staging/${OE_PREFIX}/ -I${X86_INCL
 SET( CMAKE_CXX_FLAGS "--sysroot ${OE_CROSS_DIR}/staging/${OE_PREFIX}/ -I${X86_INCLUDE_DIR} -I${X86_GINCLUDE_DIR} -I${X86_CPINCLUDE_DIR} -I${X86_GCPINCLUDE_DIR} -march=geode" )
 SET( CMAKE_EXE_LINKER_FLAGS "-Wl,--sysroot,${OE_CROSS_DIR}/staging/${OE_PREFIX}/ -lgcc -L${X86_GLIBC_DIR} -lc -lstdc++ -ldl" )
 
-INCLUDE("${OE_CROSS_DIR}/toolchain-geode.cmake")
+INCLUDE("${AL_DIR}/crosstoolchain/toolchain-geode.cmake")
