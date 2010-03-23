@@ -184,7 +184,6 @@ def approachBallWithLoc(player):
 
     return player.stay()
 
-
 def approachBall(player):
     """
     Once we are alligned with the ball, approach it

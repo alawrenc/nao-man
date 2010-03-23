@@ -25,8 +25,6 @@ def scanFindBall(player):
             return player.goLater('spinFindBall')
         elif transitions.shouldTurnToBall_FoundBall(player):
             return player.goLater('turnToBall')
-        elif transitions.shouldSpinFindBall(player):
-            return player.goLater('spinFindBall')
 
     if abs(player.brain.ball.locBearing) < constants.SCAN_FIND_BEARING_THRESH \
             or player.brain.ball.locDist < constants.SCAN_FIND_DIST_THRESH \

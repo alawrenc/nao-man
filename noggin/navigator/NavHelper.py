@@ -130,6 +130,7 @@ def getSpinOnlyParam(my, dest):
 
     spinDir = my.spinDirToHeading(dest.h)
     headingDiff = fabs(my.getRelativeBearing(dest))
+    ## my.getRelativeBearing(dest)??
     sTheta = spinDir * constants.GOTO_SPIN_SPEED * \
              getRotScale(headingDiff)
 
@@ -181,13 +182,3 @@ def getRotScale(headingDiff):
         return constants.HEADING_MEDIUM_SCALE
     else:
         return constants.HEADING_FAR_SCALE
-
-def useFinalHeading(brain, position):
-    if brain.gameController.currentState == 'gameReady':
-        useFinalHeadingDist = constants.FINAL_HEADING_READY_DIST
-    else:
-        useFinalHeadingDist = constants.FINAL_HEADING_DIST
-
-    distToPoint = brain.my.dist(position)
-
-    return (distToPoint <= useFinalHeadingDist)

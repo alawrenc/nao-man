@@ -21,7 +21,7 @@ def playbookWalk(nav):
 
     # this order is important! the other way he will attempt to spin and walk
     # to a position very close behind him
-    if helper.useFinalHeading(nav.brain, dest):
+    if useFinalHeading(nav.brain, dest):
         nav.omniWalkToCount += 1
         if nav.omniWalkToCount > constants.FRAMES_THRESHOLD_TO_POSITION_OMNI:
             return nav.goLater('playbookOmni')
@@ -57,15 +57,15 @@ def playbookOmni(nav):
         if helper.atDestinationCloser(my, dest) and helper.atHeading(my, dest.h):
             return nav.goNow('stop')
 
-    headingDiff = fabs(my.getRelativeBearing(dest))
-    ## if headingDiff > constants.HEADING_THRESHOLD_TO_SPIN:
+    bearingDiff = fabs(my.getRelativeBearing(dest))
+    ## if bearingDiff > constants.HEADING_THRESHOLD_TO_SPIN:
     ##     nav.spinToPointCount += 1
     ##     if nav.spinToPointCount > constants.FRAMES_THRESHHOLD_TO_SPIN:
     ##         return nav.goLater('playbookSpin')
     ## else:
     ##     nav.spinToPointCount = 0
 
-    if not helper.useFinalHeading(nav.brain, dest):
+    if not useFinalHeading(nav.brain, dest):
         nav.stopOmniCount += 1
         if nav.stopOmniCount > constants.FRAMES_THRESHOLD_TO_POSITION_PLAYBOOK:
             return nav.goLater('playbookWalk')
@@ -85,15 +85,15 @@ def playbookSpin(nav):
     walkX, walkY, walkTheta = helper.getSpinOnlyParam(my, dest)
     helper.setSpeed(nav, walkX, walkY, walkTheta)
 
-    if helper.useFinalHeading(nav.brain, dest):
+    if useFinalHeading(nav.brain, dest):
         nav.walkOmniCount += 1
         if nav.walkOmniCount > constants.FRAMES_THRESHOLD_TO_POSITION_OMNI:
             return nav.goLater('playbookOmni')
     else:
         nav.walkOmniCount = 0
 
-    headingDiff = fabs(my.getRelativeBearing(dest))
-    if headingDiff < constants.HEADING_THRESHOLD_TO_SPIN:
+    bearingDiff = fabs(my.getRelativeBearing(dest))
+    if bearingDiff < constants.HEADING_THRESHOLD_TO_SPIN:
         nav.spinToPointCount += 1
         if nav.spinToPointCount > constants.FRAMES_THRESHHOLD_TO_SPIN:
             return nav.goLater('playbookWalk')
@@ -101,3 +101,13 @@ def playbookSpin(nav):
         nav.spinToPointCount = 0
 
     return nav.stay()
+
+def useFinalHeading(brain, position):
+    if brain.gameController.currentState == 'gameReady':
+        useFinalHeadingDist = constants.FINAL_HEADING_READY_DIST
+    else:
+        useFinalHeadingDist = constants.FINAL_HEADING_DIST
+
+    distToPoint = brain.my.dist(position)
+
+    return (distToPoint <= useFinalHeadingDist)

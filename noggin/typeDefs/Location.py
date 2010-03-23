@@ -4,7 +4,9 @@ from math import (degrees,
 from ..util import MyMath
 
 class Location (object):
-
+    """
+    a location is a point in global coordinates with a height
+    """
     def __init__(self, x = 0, y = 0, z = 0):
         self.x = x
         self.y = y
@@ -20,8 +22,12 @@ class Location (object):
                     self.y == other.y and
                     self.z == other.z)
 
+    def __repr__(self):
+        return "x: %i  y: %i  z: %i" % (self.x, self.y, self.z)
+
     def dist(self, other):
         ''' returns euclidian dist'''
+        ## TODO add handling for height
         # HACK HACK HACK HACK for infinity values HACK HACK
         if other.x == float('inf') or \
                other.y == float('inf'):
@@ -40,10 +46,25 @@ class Location (object):
         pass
 
 class RobotLocation(Location):
-
+    """
+    A robot location is a location with a heading faced and height of 0
+    """
     def __init__(self, xP = 0, yP = 0, h = 0):
         Location.__init__(self, xP, yP)
         self.h = h
+
+    def __eq__(self, other):
+        return (self.x == other.x and
+                self.y == other.y and
+                self.h == other.h)
+
+    def __ne__(self, other):
+        return not (self.x == other.x and
+                    self.y == other.y and
+                    self.h == other.h)
+
+    def __repr__(self):
+        return "x: %i  y: %i  h: %i" % (self.x, self.y, self.h)
 
     def getRelativeBearing(self, other):
         '''return relative heading from robot localization to abs x,y on field'''

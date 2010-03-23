@@ -5,6 +5,7 @@ from . import PlaybookPositionStates
 from . import NavConstants as constants
 from . import NavHelper as helper
 from man.noggin.typeDefs.Location import RobotLocation
+from man.noggin import NogginConstants
 
 class Navigator(FSA.FSA):
     def __init__(self,brain):
@@ -48,7 +49,7 @@ class Navigator(FSA.FSA):
         self.dest = dest
         self.switchTo('omniWalkToPoint')
 
-    def goTo(self,dest):
+    def goTo(self, dest):
         self.dest = dest
 
         if not self.currentState == 'spinToWalkHeading' and \
@@ -59,14 +60,26 @@ class Navigator(FSA.FSA):
             elif helper.atHeadingGoTo(self.brain.my, self.dest.h):
                 self.switchTo('walkStraightToPoint')
 
+    def chaseBall(self):
+        ball = self.brain.ball
+        h = ball.getTargetHeading(NogginConstants.OPP_GOAL)
+        self.dest = RobotLocation(ball.x, ball.y, h)
+
+        if not self.isChasing():
+            self.switchTo('chase')
+
     def stop(self):
-        if self.currentState =='stop':
+        if self.currentState =='stop' or \
+               self.currentState == 'stopped'::
             pass
         else:
             self.switchTo('stop')
 
     def isStopped(self):
         return self.currentState == 'stopped'
+
+    def isChasing(self):
+        pass
 
     def movingOmni(self):
         return self.currentState == 'omniWalkToPoint'

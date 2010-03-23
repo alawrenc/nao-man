@@ -138,6 +138,12 @@ class Ball(VisualObject):
         self.relVelX = getRelativeVelocityX(my.h, self.velX, self.velY)
         self.relVelY = getRelativeVelocityY(my.h, self.velX, self.velY)
 
+    def inOppGoalBox(self):
+        """determine if ball is in opponents goal box."""
+        return (Constants.OPP_GOALBOX_LEFT_X < self.x and
+                Constants.OPP_GOALBOX_BOTTOM_Y < self.y <
+                Constants.OPP_GOALBOX_TOP_Y)
+
     def __str__(self):
         """returns string with all class variables"""
         return (" loc: (%g,%g) uncert: (%g,%g) sd: %g vel (%g,%g) dist: %g \

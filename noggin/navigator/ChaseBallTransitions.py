@@ -129,11 +129,6 @@ def shouldStopDribbling(player):
                                   NogginConstants.GREEN_PAD_X))
 
 
-def inOppGoalbox(player):
-    return (NogginConstants.OPP_GOALBOX_LEFT_X < player.brain.my.x and
-            NogginConstants.OPP_GOALBOX_BOTTOM_Y < player.brain.my.y <
-            NogginConstants.OPP_GOALBOX_TOP_Y)
-
 ######### BALL IN BOX ###############
 
 def shouldChaseAroundBox(player):
