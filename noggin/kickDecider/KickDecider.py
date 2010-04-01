@@ -1,9 +1,13 @@
+from ..players import KickingConstants as constants
+from .. import NogginConstants
+from ..typeDefs.Location import Location
+
 class KickDecider:
     """
     Class to hold all the things we need to decide a kick
     """
 
-    def __init__(self,player):
+    def __init__(self, brain):
         self.oppGoalLeftPostBearings = []
         self.oppGoalRightPostBearings = []
         self.myGoalLeftPostBearings = []
@@ -28,7 +32,8 @@ class KickDecider:
         self.sawOwnGoal = False
         self.sawOppGoal = False
 
-        self.player = player
+        self.brain = brain
+        self.player = brain.player
         self.ballForeFoot = constants.LEFT_FOOT
 
     def collectData(self, info):
@@ -133,36 +138,34 @@ class KickDecider:
             s = "No goal posts observed"
         return s
 
-    def getShotCloseAimPoint(player):
+    def getShotCloseAimPoint(self):
         return (NogginConstants.FIELD_WIDTH,
                 NogginConstants.MIDFIELD_Y)
 
-    def getShotFarAimPoint(player):
-        if player.brain.my.y < NogginConstants.MIDFIELD_Y:
+    def getShotFarAimPoint(self):
+        if self.brain.my.y < NogginConstants.MIDFIELD_Y:
             return constants.SHOOT_AT_LEFT_AIM_POINT
         else :
             return constants.SHOOT_AT_RIGHT_AIM_POINT
 
-    def getKickObjective(player):
+    def getKickObjective(self):
         """
         Figure out what to do with the ball
         """
-        kickDecider = player.kickDecider
         avgOppGoalDist = 0.0
 
-        my = player.brain.my
+        my = self.brain.my
 
-        if not player.hasKickedOffKick:
+        if not self.hasKickedOffKick:
             return constants.OBJECTIVE_KICKOFF
 
         if my.x < NogginConstants.FIELD_WIDTH / 2:
             return constants.OBJECTIVE_CLEAR
 
-        elif MyMath.dist(my.x, my.y,
-                       NogginConstants.OPP_GOALBOX_RIGHT_X,
-                       NogginConstants.OPP_GOALBOX_MIDDLE_Y ) > \
-                       NogginConstants.FIELD_WIDTH / 3 :
-                       return constants.OBJECTIVE_CENTER
+        elif my.dist(Location(NogginConstants.OPP_GOALBOX_RIGHT_X,
+                              NogginConstants.OPP_GOALBOX_MIDDLE_Y)) > \
+                              NogginConstants.FIELD_WIDTH / 3:
+            return constants.OBJECTIVE_CENTER
 
         elif my.x > NogginConstants.FIELD_WIDTH * 3/4 and \
                 NogginConstants.FIELD_HEIGHT/4. < my.y < \

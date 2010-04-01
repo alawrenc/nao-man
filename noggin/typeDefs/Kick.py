@@ -1,6 +1,5 @@
 
-class Kick(Object):
-    self.sweetMove = None
+class Kick(object):
 
     def __init__(self, sweetMove):
         self.sweetMove = sweetMove
@@ -8,4 +7,4 @@ class Kick(Object):
     def getSweetMove(self):
         return self.sweetMove
 
-    
+

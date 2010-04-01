@@ -25,6 +25,7 @@ from . import Leds
 # Packages and modules from sub-directories
 from . import robots
 from .playbook import PBInterface
+from .kickDecider import KickDecider
 from .players import Switch
 
 import _roboguardian
@@ -88,6 +89,7 @@ class Brain(object):
         self.tracker = HeadTracking.HeadTracking(self)
         self.nav = Navigator.Navigator(self)
         self.playbook = PBInterface.PBInterface(self)
+        self.kickDecider = KickDecider.KickDecider(self)
         self.gameController = GameController.GameController(self)
         self.fallController = FallController.FallController(self)
 
