@@ -83,7 +83,7 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         self.penaltyMadeSecondKick = False
 
         # Kickoff kick
-        self.hasKickedOffKick = True
+        self.brain.kickDecider.hasKickedOffKick = True
 
         # Goalie squat save
         self.squatting = False

@@ -68,9 +68,9 @@ def gameReady(player):
             player.standup()
 
     if player.brain.gameController.ownKickOff:
-        player.hasKickedOffKick = False
+        player.brain.kickDecider.hasKickedOffKick = False
     else:
-        player.hasKickedOffKick = True
+        player.brain.kickDecider.hasKickedOffKick = True
 
     player.brain.tracker.locPans()
     if player.lastDiffState == 'gameInitial':
