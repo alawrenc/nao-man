@@ -2,18 +2,16 @@ from . import SoccerFSA
 from . import ChaseBallStates
 from . import PositionStates
 from . import FindBallStates
-from . import KickingStates
 from . import PenaltyKickStates
 from . import GoaliePositionStates
 from . import GoalieSaveStates
 from . import SquatPositionStates
 from . import BrunswickStates
+from . import KickingStates
 
 from . import GoalieTransitions
 from . import ChaseBallTransitions
-from . import KickingHelpers
 
-from . import KickingConstants
 from .. import NogginConstants
 from ..playbook import PBConstants
 from . import ChaseBallConstants as ChaseConstants
@@ -44,7 +42,6 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         self.trackingBall = False
 
         self.chosenKick = None
-        self.kickDecider = None
         self.justKicked = False
         self.inKickingState = False
 
@@ -182,7 +179,7 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
 
     def getApproachHeadingFromBehind(self):
         ball = self.brain.ball
-        aimPoint = KickingHelpers.getShotFarAimPoint(self)
+        aimPoint = self.brain.kickDecider.getShotFarAimPoint()
         ballLoc = RobotLocation(ball.x, ball.y, NogginConstants.OPP_GOAL_HEADING)
         ballBearingToGoal = ballLoc.getRelativeBearing(aimPoint)
         return ballBearingToGoal
@@ -190,7 +187,7 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
     def getApproachHeadingFromFront(self):
         ball = self.brain.ball
         my = self.brain.my
-        kickDest = KickingHelpers.getShotFarAimPoint(self)
+        kickDest = self.brain.kickDecider.getShotFarAimPoint()
         ballLoc = RobotLocation(ball.x, ball.y, NogginConstants.OPP_GOAL_HEADING)
         ballBearingToKickDest = ballLoc.getRelativeBearing(kickDest)
         if my.y > ball.y:

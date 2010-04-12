@@ -85,11 +85,11 @@ class Brain(object):
             self.sonar.MIN_DIST = 30.0
 
         # FSAs
+        self.kickDecider = KickDecider.KickDecider(self)
         self.player = Switch.selectedPlayer.SoccerPlayer(self)
         self.tracker = HeadTracking.HeadTracking(self)
         self.nav = Navigator.Navigator(self)
         self.playbook = PBInterface.PBInterface(self)
-        self.kickDecider = KickDecider.KickDecider(self)
         self.gameController = GameController.GameController(self)
         self.fallController = FallController.FallController(self)
 

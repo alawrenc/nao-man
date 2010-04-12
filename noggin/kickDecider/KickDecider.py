@@ -33,36 +33,67 @@ class KickDecider:
         self.sawOppGoal = False
 
         self.brain = brain
-        self.player = brain.player
         self.ballForeFoot = constants.LEFT_FOOT
 
-    def collectData(self, info):
+    def update(self):
+        self.collectData()
+        self.calculate()
+
+    def resetData(self):
+        """
+        reset data btwn frames to avoid confusion
+        """
+        self.oppGoalLeftPostBearings = []
+        self.oppGoalRightPostBearings = []
+        self.myGoalLeftPostBearings = []
+        self.myGoalRightPostBearings = []
+
+        self.oppGoalLeftPostDists = []
+        self.oppGoalRightPostDists = []
+        self.myGoalLeftPostDists = []
+        self.myGoalRightPostDists = []
+
+        self.oppLeftPostBearing = None
+        self.oppRightPostBearing = None
+        self.myLeftPostBearing = None
+        self.myRightPostBearing = None
+
+        self.oppLeftPostDist = 0.0
+        self.oppRightPostDist = 0.0
+        self.myLeftPostDist = 0.0
+        self.myRightPostDist = 0.0
+
+        self.sawOwnGoal = False
+        self.sawOppGoal = False
+
+
+    def collectData(self):
         """
         Collect info on any observed goals
         """
-        if info.myGoalLeftPost.on:
-            if info.myGoalLeftPost.certainty == NogginConstants.SURE:
+        if self.brain.myGoalLeftPost.on:
+            if self.brain.myGoalLeftPost.certainty == NogginConstants.SURE:
                 self.sawOwnGoal = True
-                self.myGoalLeftPostBearings.append(info.myGoalLeftPost.bearing)
-                self.myGoalLeftPostDists.append(info.myGoalLeftPost.dist)
+                self.myGoalLeftPostBearings.append(self.brain.myGoalLeftPost.bearing)
+                self.myGoalLeftPostDists.append(self.brain.myGoalLeftPost.dist)
 
-        if info.myGoalRightPost.on:
-            if info.myGoalRightPost.certainty == NogginConstants.SURE:
+        if self.brain.myGoalRightPost.on:
+            if self.brain.myGoalRightPost.certainty == NogginConstants.SURE:
                 self.sawOwnGoal = True
-                self.myGoalRightPostBearings.append(info.myGoalRightPost.bearing)
-                self.myGoalRightPostDists.append(info.myGoalRightPost.dist)
+                self.myGoalRightPostBearings.append(self.brain.myGoalRightPost.bearing)
+                self.myGoalRightPostDists.append(self.brain.myGoalRightPost.dist)
 
-        if info.oppGoalLeftPost.on:
-            if info.oppGoalLeftPost.certainty == NogginConstants.SURE:
+        if self.brain.oppGoalLeftPost.on:
+            if self.brain.oppGoalLeftPost.certainty == NogginConstants.SURE:
                 self.sawOppGoal = True
-                self.oppGoalLeftPostBearings.append(info.oppGoalLeftPost.bearing)
-                self.oppGoalLeftPostDists.append(info.oppGoalLeftPost.dist)
+                self.oppGoalLeftPostBearings.append(self.brain.oppGoalLeftPost.bearing)
+                self.oppGoalLeftPostDists.append(self.brain.oppGoalLeftPost.dist)
 
-        if info.oppGoalRightPost.on:
-            if info.oppGoalRightPost.certainty == NogginConstants.SURE:
+        if self.brain.oppGoalRightPost.on:
+            if self.brain.oppGoalRightPost.certainty == NogginConstants.SURE:
                 self.sawOppGoal = True
-                self.oppGoalRightPostBearings.append(info.oppGoalRightPost.bearing)
-                self.oppGoalRightPostDists.append(info.oppGoalRightPost.dist)
+                self.oppGoalRightPostBearings.append(self.brain.oppGoalRightPost.bearing)
+                self.oppGoalRightPostDists.append(self.brain.oppGoalRightPost.dist)
 
     def calculate(self):
         """
@@ -97,7 +128,7 @@ class KickDecider:
 
     # Make sure ball is on before doing this
     def ballForeWhichFoot(self):
-        ball = self.player.brain.ball
+        ball = self.brain.ball
 
         if not (constants.MAX_KICK_X > ball.relX > constants.MIN_KICK_X) or \
                 not ball.on:
