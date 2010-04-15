@@ -41,8 +41,6 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         self.currentGait = None
         self.trackingBall = False
 
-        self.chosenKick = None
-        self.justKicked = False
         self.inKickingState = False
 
         self.shouldSaveCounter = 0
@@ -70,17 +68,6 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         self.angleToAlign = 0.0
         self.orbitAngle = 0.0
         self.hasAlignedOnce = False
-        self.bigKick = False
-
-        self.kickObjective = None
-
-        # Penalty kick player variables
-        self.penaltyKicking = False
-        self.penaltyMadeFirstKick = True
-        self.penaltyMadeSecondKick = False
-
-        # Kickoff kick
-        self.brain.kickDecider.hasKickedOffKick = True
 
         # Goalie squat save
         self.squatting = False
@@ -90,9 +77,9 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         self.play = self.brain.play
         if self.currentState == 'afterKick' or \
                 self.lastDiffState == 'afterKick':
-            self.justKicked = True
+            self.kickDecider.justKicked = True
         else:
-            self.justKicked = False
+            self.kickDecider.justKicked = False
 
         gcState = self.brain.gameController.currentState
         if gcState == 'gamePlaying' or\
@@ -141,9 +128,9 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
 
     ###### HELPER METHODS ######
     def getSpinDirAfterKick(self):
-        if self.chosenKick == SweetMoves.LEFT_SIDE_KICK:
+        if self.kickDecider.chosenKick == SweetMoves.LEFT_SIDE_KICK:
             return ChaseConstants.TURN_RIGHT
-        elif self.chosenKick == SweetMoves.RIGHT_FAR_KICK:
+        elif self.kickDecider.chosenKick == SweetMoves.RIGHT_FAR_KICK:
             return ChaseConstants.TURN_LEFT
         else :
             return ChaseConstants.TURN_LEFT
@@ -159,7 +146,7 @@ class SoccerPlayer(SoccerFSA.SoccerFSA):
         ball = self.brain.ball
         my = self.brain.my
 
-        if self.penaltyKicking:
+        if self.kickDecider.penaltyKicking:
             destKickLoc = self.getPenaltyKickingBallDest()
             ballLoc = RobotLocation(ball.x, ball.y, NogginConstants.OPP_GOAL_HEADING)
             destH = my.getRelativeBearing(destKickLoc)

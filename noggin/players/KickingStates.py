@@ -22,7 +22,7 @@ def getKickInfo(player):
     """
     player.inKickingState = True
 
-    if player.firstFrame():
+    if player.firstFqrame():
         player.brain.tracker.switchTo('stopped')
         player.brain.motion.stopHeadMoves()
         player.kickScan()
@@ -53,30 +53,64 @@ def decideKick(player):
         player.inKickingState = False
         return player.goLater('scanFindBall')
 
-    # Get references to the collected data
-    myLeftPostBearing =  player.brain.kickDecider.myLeftPostBearing
-    myRightPostBearing = player.brain.kickDecider.myRightPostBearing
-    oppLeftPostBearing = player.brain.kickDecider.oppLeftPostBearing
-    oppRightPostBearing = player.brain.kickDecider.oppRightPostBearing
-
     player.printf(player.brain.kickDecider)
 
     if player.penaltyKicking:
         return player.goNow('penaltyKickBall')
 
-    player.kickObjective = player.brain.kickDecider.getKickObjective()
+    kd = player.brain.kickDecider
+    #figure out what we want the kick to accomplish
+    kd.updateKickObjective()
+    #figure out what kick will best do this
+    #kd.getKick()
+    #figure out what to do before executing the kick
+    # return player.goNow('adjustToKick')
 
-    if player.kickObjective == constants.OBJECTIVE_CLEAR:
+    if kd.kickObjective == constants.OBJECTIVE_CLEAR:
         return player.goNow('clearBall')
-    elif player.kickObjective == constants.OBJECTIVE_SHOOT_FAR or \
-            player.kickObjective == constants.OBJECTIVE_SHOOT_CLOSE:
+    elif kd.kickObjective == constants.OBJECTIVE_SHOOT_FAR or \
+            kd.kickObjective == constants.OBJECTIVE_SHOOT_CLOSE:
         return player.goNow('shootBall')
-    elif player.kickObjective == constants.OBJECTIVE_KICKOFF:
-        player.hasKickedOffKick = True
-        player.bigKick = False
+    elif kd.kickObjective == constants.OBJECTIVE_KICKOFF:
         return player.goNow('kickBallStraight')
     else :
         return player.goNow('clearBall')
+
+def adjustToKick(player):
+    """
+    would like to abstract this further, each kick defines a range of positions
+    to kick from. we adjust our position to be within it
+    """
+    my = player.brain.my
+    kd = player.brain.kickDecided
+    if kd.kickObjective == constants.OBJECTIVE_CLEAR:
+        if abs(my.h) > constants.ORBIT_OWN_GOAL_HEADING_THRESH and \
+               (my.inTopOfField() or my.inBottomOfField() ):
+            return player.goLater('orbitBeforeKick')
+
+    if kd.chosenKick == SweetMoves.SHORT_QUICK_LEFT_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.SHORT_QUICK_RIGHT_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.LEFT_BIG_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.LEFT_FAR_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.RIGHT_BIG_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.RIGHT_FAR_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.RIGHT_SIDE_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.LEFT_SIDE_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.SHORT_LEFT_SIDE_KICK:
+        pass
+    elif kd.chosenKick == SweetMoves.SHORT_RIGHT_SIDE_KICK:
+        pass
+    else:
+        return player.goLater('positionForKick')
+
 
 def clearBall(player):
     """
@@ -302,7 +336,7 @@ def shootBall(player):
 
     # if somehow we didn't return already with our kick choice,
     # use localization for kick
-    if player.kickObjective == constants.OBJECTIVE_SHOOT_CLOSE:
+    if player.brain.kickDecider.kickObjective == constants.OBJECTIVE_SHOOT_CLOSE:
         return player.goNow('shootBallClose')
     else :
         return player.goNow('shootBallFar')
